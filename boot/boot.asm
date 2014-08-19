@@ -7,38 +7,14 @@ org 7c00h						;BIOS将把启动扇区加载到 7c00h处并开始执行。
 ;------------------------------------------------------------------------------------------------
 ;常量
 BaseOfStack			equ	7c00h
-SectorNoOfRootDirectory		equ	19		;根目录的第一个扇区。
-RootDirSectors			equ	14		;根目录占用空间。
 BaseOfLoader			equ	9000h		;Loader.bin被加载到的位置--段地址。
 OffsetOfLoader			equ	0100h		;Loader.bin被加载到的位置--偏移地址。
-SectorNoOfFAT1			equ	1		;FAT1的第一个扇区号 = BPB_RsvdSecCnt
-DeltaSectorNo			equ	17
 ;------------------------------------------------------------------------------------------------
 
 ;下面是FAT12引导扇区的格式。
 	jmp short LABEL_START				;开始启动。
 	nop						;长度3字节，一个段跳转指令。
-
-	BS_OEMName		db	'Liang_BZ'	;厂商名，必须为8个字节。
-	BPB_BytesPerSec 	dw	512		;每扇区字节数。
-	BPB_SecPerClus		db	1		;每簇扇区数。
-	BPB_RsvdSecCnt		dw	1		;Boot记录占用多少扇区。
-	BPB_NumFATs		db	2		;共有多少FAT表。
-	BPB_RootEntCnt		dw	224		;根目录文件数最大值。
-	BPP_TotSec16		dw 	2280		;逻辑扇区总数。
-	BPB_Media		db	0xF0		;媒体描述符。
-	BPB_FATSz16		dw	9		;每FAT扇区数。
-	BPB_SecPerTrk		dw	18		;每磁道扇区数。
-	BPP_NumHeads		dw	2		;磁头数（面数）。
-	BPB_HiddSec		dd	0		;隐藏扇区数。
-	BPB_TotSec32		dd	0		;wTotalSectorCount为0时这个值记录扇区数。
-	BS_DrvNum		db	0		;中断13的驱动器号。
-	BS_Reserved1		db	0		;保留位。
-	BS_BootSig		db	0x29		;扩展引导标记（29h）
-	BS_VolID		dd	0		;卷序列号。
-	BS_VolLab		db	'bzOS       '	;卷标，必须为11个字节。
-	BS_FileSysType		db	'FAT12   '	;文件系统类型，必须为8字节。
-
+%include	"fat12hdr.inc"
 LABEL_START:
 	mov	ax, cs
 	mov	ds, ax
@@ -52,6 +28,9 @@ LABEL_START:
 	mov	cx, 0
 	mov	dx, 0184fh
 	int	10h
+
+	mov	dh, 0
+	call	DispStr
 
 	;开始在软盘中寻找Loader.bin。
 	xor	ah, ah
@@ -74,10 +53,10 @@ LABEL_SEARCH_IN_ROOT_DIR_BEGIN:
 	mov	si, LoaderFileName			;ds:si-->"LOADER  BIN"
 	mov	di, OffsetOfLoader			;es:di-->BaseOfLoader : 0100h
 	cld
-	mov	dx, 10h
+	mov	dx, 10h					;每个扇区有16个更目录的条目。
 LABEL_SEARCH_FOR_LOADERBIN:
-	cmp	dx, 0					;
-	jz	LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR
+	cmp	dx, 0					;如果此扇区没找到，进入下一个扇区。
+	jz	LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR	;
 	dec	dx
 	mov	cx, 11
 LABEL_CMP_FILENAME:
@@ -110,8 +89,8 @@ LABEL_NO_LOADERBIN:
 
 LABEL_FILENAME_FOUND:					;加载Loader
 	mov	ax, RootDirSectors
-	and	di, 0ffe0h
-	add	di, 01ah
+	and	di, 0ffe0h				;di --> 当前条目的开始。
+	add	di, 01ah				;di --> 首Sector
 	mov	cx, word [es : di]
 	push	cx
 	add	cx, ax
