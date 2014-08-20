@@ -1,17 +1,33 @@
 ;	2014-8-10
-;Loader加载内核到内存。
+;Loader加载内核到内存。并且进入保护模式，开启分页机制。
+;================================================================================================
 
 org	0100h
 
-BaseOfStack		equ	0100h
-
-BaseOfKernelFile	equ	0800h				;KERNEL.BIN被加载到的位置（段地址）。
-OffsetOfKernelFile	equ	0h				;
-
-
-	jmp	LABEL_START
+jmp	LABEL_START
 
 %include	"fat12hdr.inc"
+%include	"load.inc"
+%include	"pm.inc"
+;GDT
+;				     段基址	     段界限	属性	
+LABEL_GDT:		Descriptor	0,		0,	0
+LABEL_DESC_FLAT_C:	Descriptor	0,	  0fffffh,	DA_CR | DA_32 | DA_LIMIT_4K	;0-4G
+LABEL_DESC_FLAT_RW:	Descriptor	0,	  0fffffh,	DA_DRW | DA_32 | DA_LIMIT_4K	;0-4G
+LABEL_DESC_VIDEO:	Descriptor 0b8000h,	   0ffffh,	DA_DRW | DA_DPL3
+
+GdtLen		equ	$ - LABEL_GDT
+GdtPtr		dw	GdtLen - 1
+		dd	BaseOfLoaderPhyAddr + LABEL_GDT
+
+;GDT选择子
+SelectorFlatC		equ	LABEL_DESC_FLAT_C	-	LABEL_GDT
+SelectorFlatRW		equ	LABEL_DESC_FLAT_RW	-	LABEL_GDT
+SelectorVideo		equ	LABEL_DESC_VIDEO	-	LABEL_GDT + SA_RPL3
+
+BaseOfStack		equ	0100h
+PageDirBase		equ	100000h				;页目录开始地址 1M
+PageTblBase		equ	101000h				;页表开始地址 1M + 4K
 
 LABEL_START:
 	mov	ax, cs
@@ -21,8 +37,26 @@ LABEL_START:
 	mov	sp, BaseOfStack
 	
 	mov	dh, 0						;'Loading  '
-	call	DispStr
-	
+	call	DispStrRealMode
+
+	;我们要打开分页机制，打开之前要知道可使用内存情况，为页目录表（Page Directory Table）和页表（Page Table）合理分配内存大小。
+	mov	ebx, 0						;ebx = 后续值， 开始时需为0
+	mov	di, _MemChkBuf					;es : di指向一个地址范围描述符结构（ARDS）
+.MemChkLoop:
+	mov	eax, 0e820h
+	mov	ecx, 20						;ecx = ARDS的大小， 20个字节。
+	mov	edx, 0534d4150h					;edx = 'SMAP'
+	int	15h
+	jc	.MemChkFail
+	add	di, 20
+	inc	dword [_dwMCRNumber]				;dwMCRNumber = ARDS的个数
+	cmp	ebx, 0
+	jne	.MemChkLoop
+	jmp	.MemChkOK
+.MemChkFail:
+	mov	dword [_dwMCRNumber], 0
+.MemChkOK:
+	;下面在软盘根目录寻找Kernel.bin
 	mov	word [wSectorNo], SectorNoOfRootDirectory
 	xor	ah, ah
 	xor	dl, dl
@@ -72,7 +106,7 @@ LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR:
 	
 LABEL_NO_KERNELBIN:
 	mov	ah, 2
-	call	DispStr
+	call	DispStrRealMode
 
 	jmp	$						;如果没有找到KERNEL.BIN
 	
@@ -121,9 +155,26 @@ LABEL_FILE_LOADED:
 	call	KillMotor
 
 	mov	dh, 1
-	call	DispStr
+	call	DispStrRealMode
 
-	jmp	$
+	;下面准备跳入保护模式
+	lgdt	[GdtPtr]
+
+	;关中断
+	cli
+
+	;打开地址线A20
+	in	al, 92h
+	and	al, 00000010b
+	out	92h, al
+
+	;准备切换到保护模式
+	mov	eax, cr0
+	or	eax, 1
+	mov	cr0, eax
+
+	;进入保护模式
+	jmp	dword SelectorFlatC : (BaseOfLoaderPhyAddr + LABEL_PM_START)
 	
 ;--------------------------------------------------------------------------------------------
 ;变量
@@ -143,11 +194,13 @@ Message1		db	'Ready    '
 Message2		db	'NO KERNEL'
 
 ;----------------------------------------------------------------------------
-; 函数名: DispStr
+; 函数名: DispStrRealMode
 ;----------------------------------------------------------------------------
+; 运行环境：
+;	实模式。
 ; 作用:
 ;	显示一个字符串, 函数开始时 dh 中应该是字符串序号(0-based)
-DispStr:
+DispStrRealMode:
 	mov	ax, MessageLength
 	mul	dh
 	add	ax, LoadMessage
@@ -264,5 +317,183 @@ KillMotor:
 	out	dx, al
 	pop	dx
 	ret
+;----------------------------------------------------------------------------
+
+;从此以后的代码在保护模式下执行----------------------------------------------
+;32位代码段，由实模式跳入----------------------------------------------------
+[section .s32]
+
+align	32
+
+[bits 32]
+
+LABEL_PM_START:
+	mov	ax, SelectorVideo
+	mov	gs, ax
+	;初始化各个寄存器
+	mov	ax, SelectorFlatRW
+	mov	ds, ax
+	mov	es, ax
+	mov	fs, ax
+	mov	ss, ax
+	mov	esp, TopOfStack
+
+	push	szMemChkTitle
+	call	DispStr
+	add	esp, 4
+
+	call	DispMemInfo
+	call	SetupPaging
+
+	mov	ah, 0fh
+	mov	al, 'P'
+	mov	[gs : ((80 * 0 + 39) * 2)], ax
+	jmp	$
+
+%include	"lib.inc"
+
+;============================================================================
+;显示内存信息
+DispMemInfo:
+	push	esi
+	push	edi
+	push	ecx
+
+	mov	esi, MemChkBuf
+	mov	ecx, [dwMCRNumber]			;每次得到一个ARDS
+.loop:
+	mov	edx, 5					;每次得到一个ARDS中的成员
+	mov	edi, ARDStruct
+.1:
+	push	dword [esi]
+	call	DispInt					;显示一个成员
+	pop	eax
+	stosd
+	add	esi, 4
+	dec	edx
+	cmp	edx, 0
+	jnz	.1
+	call	DispReturn
+	cmp	dword [dwType], 1			;如果这个内存段是一段可以被OS使用的RAM
+	jne	.2
+	mov	eax, [dwBaseAddrLow]
+	add	eax, [dwLengthLow]
+	cmp	eax, [dwMemSize]
+	jb	.2
+	mov	[dwMemSize], eax
+.2:	
+	loop	.loop
+
+	call	DispReturn
+	push	szRAMSize
+	call	DispStr					;打印字符串"RAM size:"
+	add	esp, 4
+
+	push	dword [dwMemSize]
+	call	DispInt
+	add	esp, 4
+
+	pop	ecx
+	pop	edi
+	pop	esi
+	ret
+
+;================================================================================================
+;启动分页机制
+;================================================================================================
+SetupPaging:
+	;根据内存大小计算应初始化多少PDE以及多少页表（Page Table）
+	xor	edx, edx
+	mov	eax, [dwMemSize]
+	mov	ebx, 400000h
+	div	ebx				;edx:eax被除数。ax = 商， dx = 余数
+	mov	ecx, eax
+	test	edx, edx			;是否整除
+	jz	.no_remainder
+	inc	ecx				;如果不能整除，就增加一个页表
+.no_remainder:
+	push	ecx				;暂存页表个数
+	;为简化处理，所有线性地址对应相等的物理地址，并且不考虑内存空洞
+	
+	;初始化页目录
+	mov	ax, SelectorFlatRW
+	mov	es, ax
+	mov	edi, PageDirBase
+	xor	eax, eax
+	mov	eax, PageTblBase | PG_P | PG_USU | PG_RWW
+.1:
+	stosd
+	add	eax, 4096
+	loop	.1
+
+	;初始化所有页表
+	pop	eax
+	mov	ebx, 1024
+	mul	ebx				;eax * ebx，PTE个数 = 页表个数 * 1024
+	mov	ecx, eax
+	mov	edi, PageTblBase
+	xor	eax, eax
+	mov	eax, PG_P | PG_USU | PG_RWW
+.2:
+	stosd
+	add	eax, 4096
+	loop	.2
+
+	mov	eax, PageDirBase
+	mov	cr3, eax
+	mov	eax, cr0
+	or	eax, 80000000h
+	mov	cr0, eax			;置cr0的PG位
+	jmp	short .3
+.3:
+	nop
+
+	ret
+;================================================================================================
 
 
+[section .data1]
+
+align	32
+
+LABEL_DATA:
+;============================================================================
+;实模式下使用这些符号
+;============================================================================
+;字符串
+_szMemChkTitle:			db	'BaseAddrL BaseAddrH LengthLow LengthHigh   Type', 0ah, 0
+_szRAMSize:			db	'RAM size:', 0
+_szReturn:			db	0ah, 0
+;变量
+_dwMCRNumber:			dd	0					;Memory Check Result
+_dwDispPos:			dd	(80 * 6 + 0) * 2			;第6行，第0列
+_dwMemSize:			dd	0
+
+_ARDStruct:
+	_dwBaseAddrLow:		dd	0
+	_dwBaseAddrHigh:	dd	0
+	_dwLengthLow:		dd	0
+	_dwLengthHigh:		dd	0
+	_dwType:		dd	0
+_MemChkBuf:	times	256	db	0
+;============================================================================
+;保护模式下使用这些符号（全是equ哦）
+;============================================================================
+szMemChkTitle			equ	BaseOfLoaderPhyAddr + _szMemChkTitle
+szRAMSize			equ	BaseOfLoaderPhyAddr + _szRAMSize
+szReturn			equ	BaseOfLoaderPhyAddr + _szReturn
+
+dwDispPos			equ	BaseOfLoaderPhyAddr + _dwDispPos
+dwMemSize			equ	BaseOfLoaderPhyAddr + _dwMemSize
+dwMCRNumber			equ	BaseOfLoaderPhyAddr + _dwMCRNumber
+ARDStruct			equ	BaseOfLoaderPhyAddr + _ARDStruct
+	dwBaseAddrLow		equ	BaseOfLoaderPhyAddr + _dwBaseAddrLow
+	dwBaseAddrHigh		equ	BaseOfLoaderPhyAddr + _dwBaseAddrHigh
+	dwLengthLow		equ	BaseOfLoaderPhyAddr + _dwLengthLow
+	dwLengthHigh		equ	BaseOfLoaderPhyAddr + _dwLengthHigh
+	dwType			equ	BaseOfLoaderPhyAddr + _dwType
+MemChkBuf			equ	BaseOfLoaderPhyAddr + _MemChkBuf
+
+;堆栈就在数据段的末尾
+StackSpace:	times	1024	db	0
+TopOfStack	equ	BaseOfLoaderPhyAddr + $
