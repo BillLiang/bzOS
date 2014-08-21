@@ -348,7 +348,11 @@ LABEL_PM_START:
 	mov	ah, 0fh
 	mov	al, 'P'
 	mov	[gs : ((80 * 0 + 39) * 2)], ax
-	jmp	$
+
+	call	InitKernel				;加载ELF文件中的内核代码到内存	
+	
+	;!!!正式进入内核了!!!
+	jmp	SelectorFlatC : KernelEntryPointPhyAddr
 
 %include	"lib.inc"
 
@@ -449,6 +453,34 @@ SetupPaging:
 	nop
 
 	ret
+
+;================================================================================================
+;将Kernel.bin的内容经过整理后放到新的位置。
+;遍历ELF文件每一个Program Header，根据Program Header中的信息确定把什么放进内存，放在哪里，以及放多少。
+;================================================================================================
+InitKernel:
+	xor	esi, esi
+	mov	cx, word [BaseOfKernelFilePhyAddr + 2ch]			;ecx <-- ELFHeader中的e_phnum，指明有多少个Program Header
+	movzx	ecx, cx								;带零扩展传送
+	mov	esi, [BaseOfKernelFilePhyAddr + 1ch]				;esi <-- ELFHeader中的e_phoff，Program Header Table在文件中的偏移量。
+	add	esi, BaseOfKernelFilePhyAddr
+.Begin:
+	mov	eax, [esi + 0]
+	cmp	eax, 0								;PT_NULL
+	jz	.NoAction
+	push	dword [esi + 10h]						;Program Header中p_filesz，段在文件中的长度
+	mov	eax, [esi + 4h]
+	add	eax, BaseOfKernelFilePhyAddr
+	push	eax								;Program Header中p_offset，段的第一个字节在文件中的偏移
+	push	dword [esi + 8h]						;Program Header中p_vaddr，段的第一个字节在内存中的虚拟地址
+	call	MemCpy								;复制文件内容到内存
+	add	esp, 12								;
+.NoAction:
+	add	esi, 20h							;下个Program Header
+	dec	ecx
+	jnz	.Begin
+
+	ret
 ;================================================================================================
 
 
@@ -497,3 +529,4 @@ MemChkBuf			equ	BaseOfLoaderPhyAddr + _MemChkBuf
 ;堆栈就在数据段的末尾
 StackSpace:	times	1024	db	0
 TopOfStack	equ	BaseOfLoaderPhyAddr + $
+;[section .data1]结束========================================================
