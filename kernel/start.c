@@ -16,7 +16,8 @@ PUBLIC DESCRIPTOR	gdt[GDT_SIZE];				//新的GDT表，大小GDT_SIZE
 
 PUBLIC	void	cstart(){
 	
-	disp_str("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n--------\"cstart\" begins-------\n");
+	disp_str("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n--------\"cstart\" begins-------\n");
+	disp_str("--------\"cstart\" ends-------\n");
 
 	//将LOADER中的GDT复制到新的GDT中
 	memcpy(&gdt,
