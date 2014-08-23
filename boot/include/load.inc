@@ -8,3 +8,6 @@ OffsetOfKernelFile		equ	0h			;			  ---- 偏移地址
 
 BaseOfKernelFilePhyAddr		equ	BaseOfKernelFile * 10h
 KernelEntryPointPhyAddr		equ	30400h
+
+PageDirBase		equ	100000h				;页目录开始地址 1M
+PageTblBase		equ	101000h				;页表开始地址 1M + 4K

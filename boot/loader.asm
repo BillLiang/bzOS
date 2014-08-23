@@ -26,8 +26,6 @@ SelectorFlatRW		equ	LABEL_DESC_FLAT_RW	-	LABEL_GDT
 SelectorVideo		equ	LABEL_DESC_VIDEO	-	LABEL_GDT + SA_RPL3
 
 BaseOfStack		equ	0100h
-PageDirBase		equ	100000h				;页目录开始地址 1M
-PageTblBase		equ	101000h				;页表开始地址 1M + 4K
 
 LABEL_START:
 	mov	ax, cs
@@ -165,7 +163,7 @@ LABEL_FILE_LOADED:
 
 	;打开地址线A20
 	in	al, 92h
-	and	al, 00000010b
+	or	al, 00000010b
 	out	92h, al
 
 	;准备切换到保护模式

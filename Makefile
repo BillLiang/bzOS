@@ -17,11 +17,12 @@ DASMFLAGS	= -u -o $(ENTRYPOINT) -e $(ENTRYOFFSET)
 ASMBFLAGS	= -I boot/include/
 ASMKFLAGS	= -I kernel/ -f elf
 LDFLAGS		= -s -Ttext $(ENTRYPOINT)
-CFLAGS		= -I include/ -c -fno-builtin
+CFLAGS		= -I include/ -c -fno-builtin -fno-stack-protector
 
 # 文件
 BOOTINCLUDE	= boot/include/fat12hdr.inc boot/include/load.inc boot/include/pm.inc
-OBJS		= kernel/kernel.o kernel/start.o lib/kliba.o lib/string.o
+OBJS		= kernel/kernel.o kernel/start.o kernel/i8259.o kernel/protect.o kernel/global.o \
+		  lib/klib.o lib/kliba.o lib/string.o
 
 BZOSBOOT	= boot/boot.bin boot/loader.bin
 BZOSKERNEL	= kernel/kernel.bin
@@ -29,7 +30,7 @@ BZOSKERNEL	= kernel/kernel.bin
 DASMOUTPUT	= kernel.bin.asm
 
 # 所有伪目标行为
-.PHONY: 
+.PHONY: everything clean realclean all final image disasm building
 
 # 默认的make开始位置
 everything: $(BZOSBOOT) $(BZOSKERNEL)
@@ -69,8 +70,20 @@ $(BZOSKERNEL): $(OBJS)
 kernel/kernel.o: kernel/kernel.asm
 	$(ASM) $(ASMKFLAGS) -o $@ $<
 
-kernel/start.o: kernel/start.c include/type.h include/const.h include/protect.h
+kernel/start.o: kernel/start.c
 	$(CC) $(CFLAGS) -o $@ $<
+
+kernel/i8259.o: kernel/i8259.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+kernel/protect.o: kernel/protect.c
+	$(CC) $(CFLAGS) -o $@ $<
+	
+kernel/global.o: kernel/global.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+lib/klib.o: lib/klib.c
+	$(CC) $(CFLAGS) -o $@ $<	
 
 lib/kliba.o: lib/kliba.asm
 	$(ASM) $(ASMKFLAGS) -o $@ $<

@@ -1,18 +1,18 @@
 
 ; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;                              klib.asm
-; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;                                                       Forrest Yu, 2005
+;               klib.asm	Bill Liang		2014-8-22
 ; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
-[SECTION .data]
-disp_pos	dd	0
+;全局变量
+extern	disp_pos
 
 [SECTION .text]
 
 ; 导出函数
 global	disp_str
+global	disp_color_str
+global	out_byte
+global	in_byte
 
 ; ========================================================================
 ;                  void disp_str(char * info);
@@ -21,7 +21,7 @@ disp_str:
 	push	ebp
 	mov	ebp, esp
 
-	mov	esi, [ebp + 8]	; pszInfo
+	mov	esi, [ebp + 8]	; pszInfo, 注意：之前进行了 push ebp 压栈操作，故这里是 +8
 	mov	edi, [disp_pos]
 	mov	ah, 0Fh
 .1:
@@ -50,4 +50,63 @@ disp_str:
 	mov	[disp_pos], edi
 
 	pop	ebp
+	ret
+
+; ========================================================================
+;		void disp_color_str(char* info, int color);
+; ========================================================================
+disp_color_str:
+	push	ebp
+	mov	ebp, esp
+
+	mov	esi, [ebp + 8]
+	mov	edi, [disp_pos]
+	mov	ah, [ebp + 12]				;颜色
+.1:
+	lodsb
+	test	al, al					;字符串结束，'\0'
+	jz	.2
+	cmp	al, 0ah					;是回车吗
+	jnz	.3
+	push	eax
+	mov	eax, edi
+	mov	bl, 160
+	div	bl
+	and	eax, 0ffh
+	inc	eax
+	mov	bl, 160
+	mul	bl
+	mov	edi, eax
+	pop	eax
+	jmp	.1
+.3:
+	mov	[gs : edi], ax
+	add	edi, 2
+	jmp	.1
+.2:
+	mov	[disp_pos], edi
+	pop	ebp
+	ret
+
+; ========================================================================
+;		void out_byte(u16 port, u8 value);
+; ========================================================================
+out_byte:
+	mov	edx, [esp + 4]				;16位端口
+	mov	al, [esp + 8]				;8位值
+	out	dx, al
+	nop						;一点延迟
+	nop
+	ret
+; ========================================================================
+
+; ========================================================================
+;		u8 in_byte(u16 port);
+; ========================================================================
+in_byte:
+	mov	edx, [esp + 4]
+	xor	eax, eax
+	in	al, dx					;al存放返回值，8位
+	nop
+	nop
 	ret
