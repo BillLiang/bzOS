@@ -6,6 +6,7 @@ SELECTOR_KERNEL_CS		equ	8
 
 extern	cstart					;导入外部函数
 extern	exception_handler
+extern	spurious_irq
 
 extern	gdt_ptr					;导入全局变量
 extern	idt_ptr
@@ -36,6 +37,24 @@ global	general_protection
 global	page_fault
 global	copr_error
 
+;对应8259A的中断例程
+global	hwint00
+global	hwint01
+global	hwint02
+global	hwint03
+global	hwint04
+global	hwint05
+global	hwint06
+global	hwint07
+global	hwint08
+global	hwint09
+global	hwint10
+global	hwint11
+global	hwint12
+global	hwint13
+global	hwint14
+global	hwint15
+
 _start:
 	mov	esp, StackTop					;把esp从Loader挪到Kernel中(堆栈在bss段中)
 
@@ -50,12 +69,91 @@ _start:
 	jmp	SELECTOR_KERNEL_CS : csinit
 	;此跳转强制使用刚刚初始化的结构
 csinit:
-	;ud2
-	jmp	0x40 : 0
-	;push	0
-	;popfd							;Pop top of stack into EFLAGS
-	;jmp	$
+	sti							;开中断
 	hlt							;停机指令
+
+; 中断和异常 -- 硬件中断
+;==================================================================================================
+%macro	hwint_master	1
+	push	%1
+	call	spurious_irq
+	add	esp, 4
+	hlt
+%endmacro
+;==================================================================================================
+
+align	16
+hwint00:							;irq0的中断例程（时钟）
+	hwint_master	0
+
+align	16
+hwint01:							;irq1的中断例程（键盘）
+	hwint_master	1
+
+align	16
+hwint02:							;irq2的中断例程（级联从8259A）
+	hwint_master	2
+
+align	16
+hwint03:							;irq3的中断例程（串口2）
+	hwint_master	3
+
+align	16
+hwint04:							;irq4的中断例程（串口1）
+	hwint_master	4
+
+align	16
+hwint05:							;irq5的中断例程（XT winchester）
+	hwint_master	5
+
+align	16
+hwint06:							;irq6的中断例程（软盘）
+	hwint_master	6
+
+align	16
+hwint07:							;irq7的中断例程（打印机）
+	hwint_master	7
+
+;==================================================================================================
+%macro	hwint_slave	1
+	push	%1
+	call	spurious_irq
+	add	esp, 4
+	hlt
+%endmacro
+;==================================================================================================
+
+align	16
+hwint08:							;irq8的中断例程（实时时钟）
+	hwint_slave	8
+
+align	16
+hwint09:							;irq9的中断例程（重定向IRQ2）
+	hwint_slave	9
+
+align	16
+hwint10:							;irq10的中断例程（保留）
+	hwint_slave	10
+
+align	16
+hwint11:							;irq11的中断例程（保留）
+	hwint_slave	11
+
+align	16
+hwint12:							;irq12的中断例程（ps/2鼠标）
+	hwint_slave	12
+
+align	16
+hwint13:							;irq13的中断例程（FPU异常）
+	hwint_slave	13
+
+align	16
+hwint14:							;irq14的中断例程（AT winchester）
+	hwint_slave	14
+
+align	16
+hwint15:							;irq15的中断例程（保留）
+	hwint_slave	15
 
 ; 中断和异常 -- 异常
 divide_error:

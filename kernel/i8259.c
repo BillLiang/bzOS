@@ -6,9 +6,9 @@
 #include "const.h"
 #include "protect.h"
 #include "proto.h"
-/*
-   初始化8259A中断控制器。
-*/
+/*=================================================================================================
+					   初始化8259A中断控制器。
+=================================================================================================*/
 PUBLIC void init_8259A(){
 
 	out_byte(INT_M_CTL, 0x11);
@@ -26,8 +26,17 @@ PUBLIC void init_8259A(){
 	out_byte(INT_M_CTLMASK, 0x1);
 	
 	out_byte(INT_S_CTLMASK, 0x1);
-
-	out_byte(INT_M_CTLMASK, 0xff);
-
+	/*主8259A，OCW1 (Operatione Control World)*/
+	out_byte(INT_M_CTLMASK, 0xfd);
+	/*从8259A，OCW1 (Operatione Control World)*/
 	out_byte(INT_S_CTLMASK, 0xff);
+}
+
+/*=================================================================================================
+					   spurious_irq
+=================================================================================================*/
+PUBLIC void spurious_irq(int irq){
+	disp_str("spurious irq: ");
+	disp_int(irq);
+	disp_str("\n");
 }
