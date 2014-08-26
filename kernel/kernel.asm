@@ -2,15 +2,18 @@
 ;			Kernel.asm			Bill Liang	2014-8-21
 ;==================================================================================================
 
-SELECTOR_KERNEL_CS		equ	8
+%include	"sconst.inc"
 
 extern	cstart					;导入外部函数
 extern	exception_handler
 extern	spurious_irq
+extern	kernel_main
 
 extern	gdt_ptr					;导入全局变量
 extern	idt_ptr
+extern	tss
 extern	disp_pos
+extern	p_proc_ready
 
 [section .bss]					;通常指用来存放程序中未初始化的全局变量和静态变量的一块内存。在程序执行之前BSS段会自动清0，所以未初始化的全局变量在程序执行之前已经置0了。
 StackSpace			resb	2 * 1024
@@ -18,7 +21,9 @@ StackTop:					;栈顶
 
 [section .text]
 
-global _start							;导出 _start
+global	_start							;导出 _start
+
+global	restart
 
 global	divide_error
 global	single_step_exception
@@ -69,8 +74,14 @@ _start:
 	jmp	SELECTOR_KERNEL_CS : csinit
 	;此跳转强制使用刚刚初始化的结构
 csinit:
-	sti							;开中断
-	hlt							;停机指令
+	;sti							;开中断
+	;hlt							;停机指令
+
+	xor	eax, eax
+	mov	ax, SELECTOR_TSS
+	ltr	ax
+
+	jmp	kernel_main
 
 ; 中断和异常 -- 硬件中断
 ;==================================================================================================
@@ -219,3 +230,22 @@ exception:
 	call	exception_handler
 	add	esp, 4*2	; 让栈顶指向 EIP，堆栈中从顶向下依次是：EIP、CS、EFLAGS
 	hlt
+
+;==================================================================================================
+;					开启第一个进程	
+;==================================================================================================
+restart:
+	mov	esp, [p_proc_ready]
+	lldt	[esp + P_LDT_SEL]
+	lea	eax, [esp + P_STACKTOP]
+	mov	dword [tss + TSS3_S_SP0], eax
+
+	pop	gs
+	pop	fs
+	pop	es
+	pop	ds
+	popad
+
+	add	esp, 4
+
+	iretd

@@ -12,10 +12,14 @@
 #define	GDT_SIZE	128
 #define	IDT_SIZE	256
 
-/*权限*/
+/* 权限 */
 #define	PRIVILEGE_KRNL	0
 #define	PRIVILEGE_TASK	1
 #define	PRIVILEGE_USER	3
+/* RPL */
+#define	RPL_KRNL	SA_RPL0
+#define	RPL_TASK	SA_RPL1
+#define	RPL_USER	SA_RPL3
 
 //8259A中断处理器的端口。
 #define INT_M_CTL		0x20			//中断命令寄存器I/O地址（主片）

@@ -7,11 +7,12 @@
 #include "protect.h"
 #include "proto.h"
 #include "string.h"
+#include "proc.h"
 #include "global.h"
 
 PUBLIC void cstart(){
 	
-	disp_str("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n--------\"cstart\" begins-------\n");
+	disp_str("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n--------\"cstart\" begins--------\n");
 
 	//将LOADER中的GDT复制到新的GDT中
 	memcpy(&gdt,
@@ -32,5 +33,5 @@ PUBLIC void cstart(){
 
 	init_prot();
 
-	disp_str("--------\"cstart\" ends-------\n");
+	disp_str("--------\"cstart\" ends--------\n");
 }

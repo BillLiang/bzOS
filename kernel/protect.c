@@ -5,10 +5,14 @@
 #include "type.h"
 #include "const.h"
 #include "protect.h"
+#include "string.h"
+#include "proc.h"
 #include "global.h"
 #include "proto.h"
 
+
 PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
+PRIVATE void init_descriptor(DESCRIPTOR* p_desc, u32 base, u32 limit, u16 attribute);
 
 /*中断处理函数*/
 void	divide_error();
@@ -101,6 +105,21 @@ PUBLIC void init_prot(){
 	init_idt_desc(INT_VECTOR_IRQ8 + 5, DA_386IGate, hwint13, PRIVILEGE_KRNL);
 	init_idt_desc(INT_VECTOR_IRQ8 + 6, DA_386IGate, hwint14, PRIVILEGE_KRNL);
 	init_idt_desc(INT_VECTOR_IRQ8 + 7, DA_386IGate, hwint15, PRIVILEGE_KRNL);
+
+	/* 初始化 GDT 中进程的 LDT 描述符 */
+	init_descriptor(&gdt[INDEX_LDT_FIRST], 
+			vir2phys(seg2phys(SELECTOR_KERNEL_DS), &proc_table[0].ldts),
+			LDT_SIZE * sizeof(DESCRIPTOR) - 1,
+			DA_LDT );
+
+	/* void* memset(void* s, int ch, size_t n)	<string.h>*/
+	memset(&tss, 0, sizeof(tss));
+	tss.ss0 = SELECTOR_KERNEL_DS;
+	init_descriptor(&gdt[INDEX_TSS],
+			vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss),
+			sizeof(tss),
+			DA_386TSS );
+	tss.iobase = sizeof(tss);			/* 没有I/O位图 */
 }
 /*=================================================================================================
   				初始化 386 中断门
@@ -113,6 +132,27 @@ PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handl
 	p_gate->dcount		= 0;
 	p_gate->attr		= desc_type | (privilege << 5);
 	p_gate->offset_high	= (base >> 16) & 0xfffff;
+}
+
+/*=================================================================================================
+  				初始化 段描述符
+ ================================================================================================*/
+PRIVATE void init_descriptor(DESCRIPTOR* p_desc, u32 base, u32 limit, u16 attribute){
+	p_desc->limit_low	= limit & 0xffff;
+	p_desc->base_low	= base & 0xffff;
+	p_desc->base_mid	= (base >> 16) & 0xff;
+	p_desc->attr1		= attribute & 0xff;
+	p_desc->limit_high_attr2= ((limit >> 16) & 0xf) | (attribute >> 8) & 0xf0;
+	p_desc->base_high	= (base >> 24) & 0xff;
+}
+
+
+/*=================================================================================================
+  					由段名求绝对地址(PUBLIC)
+ ================================================================================================*/
+PUBLIC u32 seg2phys(u16 seg){
+	DESCRIPTOR* p_desc = &gdt[seg >> 3];
+	return (p_desc->base_high << 24 | p_desc->base_mid << 16 | p_desc->base_low);
 }
 
 /*=================================================================================================

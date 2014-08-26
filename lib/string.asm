@@ -5,6 +5,7 @@
 
 ;导出函数
 global	memcpy
+global	memset
 
 ; ------------------------------------------------------------------------
 ; void* memcpy(void* pDest, void* pSrc, int iSize);
@@ -43,3 +44,35 @@ memcpy:
 
 	ret			; 函数结束，返回
 ; memcpy 结束-------------------------------------------------------------
+
+; ------------------------------------------------------------------------
+; void* memset(void* s, int ch, int size);
+; ------------------------------------------------------------------------
+memset:
+	push	ebp
+	mov	ebp, esp
+
+	push	esi
+	push	edi
+	push	ecx
+
+	mov	edi, [ebp + 8]			;void *s
+	mov	edx, [ebp + 12]			;int ch
+	mov	ecx, [ebp + 16]			;int size
+.1:
+	cmp	ecx, 0
+	jz	.2
+
+	mov	byte [edi], dl
+	inc	edi
+	dec	ecx
+	jmp	.1
+.2
+	pop	ecx
+	pop	edi
+	pop	esi
+	mov	esp, ebp
+	pop	ebp
+
+	ret
+;-------------------------------------------------------------------------
