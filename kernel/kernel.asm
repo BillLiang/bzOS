@@ -8,12 +8,15 @@ extern	cstart					;导入外部函数
 extern	exception_handler
 extern	spurious_irq
 extern	kernel_main
+extern	disp_str
+extern	clock_handler
 
 extern	gdt_ptr					;导入全局变量
 extern	idt_ptr
 extern	tss
 extern	disp_pos
 extern	p_proc_ready
+extern	k_reenter
 
 [section .bss]					;通常指用来存放程序中未初始化的全局变量和静态变量的一块内存。在程序执行之前BSS段会自动清0，所以未初始化的全局变量在程序执行之前已经置0了。
 StackSpace			resb	2 * 1024
@@ -95,7 +98,48 @@ csinit:
 
 align	16
 hwint00:							;irq0的中断例程（时钟）
-	hwint_master	0
+	sub	esp, 4
+	pushad
+	push	ds
+	push	es
+	push	fs
+	push	gs
+	
+	mov	dx, ss
+	mov	ds, dx
+	mov	es, dx
+
+	mov	al, EOI
+	out	INT_M_CTL, al
+
+	inc	dword [k_reenter]
+	cmp	dword [k_reenter], 0
+	jne	.re_enter
+
+	mov	esp, StackTop					; !!非常重要，切换到内核栈!!
+
+	sti							;开中断，允许中断嵌套
+
+	push	0						;把irq号进栈，作为函数参数
+	call	clock_handler
+	add	esp, 4
+
+	cli							;关中断
+
+	mov	esp, [p_proc_ready]
+	lldt	[esp + P_LDT_SEL]
+	lea	eax, [esp + P_STACKTOP]
+	mov	dword [tss + TSS3_S_SP0], eax
+.re_enter:
+	dec	dword [k_reenter]
+	pop	gs
+	pop	fs
+	pop	es
+	pop	ds
+	popad
+	add	esp, 4
+
+	iretd
 
 align	16
 hwint01:							;irq1的中断例程（键盘）

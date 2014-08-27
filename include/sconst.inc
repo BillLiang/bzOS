@@ -31,3 +31,10 @@ TSS3_S_SP0	equ	4
 SELECTOR_FLAT_C		equ	0x08
 SELECTOR_TSS		equ	0x20
 SELECTOR_KERNEL_CS	equ	SELECTOR_FLAT_C
+
+INT_M_CTL		equ	0x20		;<主>中断控制器的I/O端口
+INT_M_CTLMASK		equ	0x21		;<主>setting bits in this port disables ints
+INT_S_CTL		equ	0xa0		;<从>第二个中断控制器的I/O端口
+INT_S_CTLMASK		equ	0xa1		;<从>setting bits in this port disables ints
+
+EOI			equ	0x20

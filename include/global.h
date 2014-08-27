@@ -10,9 +10,13 @@ EXTERN	DESCRIPTOR	gdt[GDT_SIZE];				//新的GDT表，大小GDT_SIZE
 EXTERN	u8		idt_ptr[6];				//0-15: Limit	16-47: Base
 EXTERN	GATE		idt[IDT_SIZE];				//新的GDT表，大小GDT_SIZE
 
+EXTERN	u32		k_reenter;
+
 EXTERN	TSS		tss;
 EXTERN	PROCESS*	p_proc_ready;
 
 /* extern声明 */
 extern	PROCESS		proc_table[];
+extern	TASK		task_table[];
+
 extern	char		task_stack[];

@@ -28,13 +28,20 @@ typedef struct s_proc{
 	u16		ldt_sel;		/* gdt selector giving ldt base and limit */
 	DESCRIPTOR	ldts[LDT_SIZE];		/* 本地描述符表，进程的一部分 */
 	u32		pid;
-	char		p_name[16];
+	char		p_name[32];
 }PROCESS;
 
+typedef struct s_task{				/* 任务，初始化进程用 */
+	task_f	initial_eip;
+	int	stacksize;
+	char	name[32];
+}TASK;
+
 /* 任务的数量 */
-#define	NR_TASKS	1
+#define	NR_TASKS	2
 
 /* 任务的栈 */
 #define	STACK_SIZE_TESTA	0x8000
+#define	STACK_SIZE_TESTB	0x8000
 
-#define	STACK_SIZE_TOTAL	STACK_SIZE_TESTA
+#define	STACK_SIZE_TOTAL	STACK_SIZE_TESTA + STACK_SIZE_TESTB

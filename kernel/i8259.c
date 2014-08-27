@@ -27,7 +27,7 @@ PUBLIC void init_8259A(){
 	
 	out_byte(INT_S_CTLMASK, 0x1);
 	/*主8259A，OCW1 (Operatione Control World)*/
-	out_byte(INT_M_CTLMASK, 0xfd);
+	out_byte(INT_M_CTLMASK, 0xfe);
 	/*从8259A，OCW1 (Operatione Control World)*/
 	out_byte(INT_S_CTLMASK, 0xff);
 }
