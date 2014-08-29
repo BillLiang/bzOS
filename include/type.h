@@ -10,4 +10,5 @@ typedef void (*int_handler)();
 
 typedef void (*task_f)();
 
+typedef	void* system_call;
 #endif

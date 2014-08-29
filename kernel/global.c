@@ -17,3 +17,6 @@ PUBLIC	TASK		task_table[NR_TASKS] = {{TestA, STACK_SIZE_TESTA, "TestA"},
 						{TestC, STACK_SIZE_TESTC, "TestC"}};
 /* 全局任务栈 */
 PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
+
+/* 系统调用 */
+PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_get_ticks};

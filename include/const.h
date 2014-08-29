@@ -39,4 +39,14 @@
 #define	PRINTER_IRQ		7
 #define	AT_WINT_IRQ		14
 
+/* 系统调用 */
+#define	NR_SYS_CALL		1
+
+/* 8253/8254 PIT (Programmable Interval Timer)可编程间隔计时器 */
+#define	TIMER0			0x40			/* I/O端口计时器 Counter 0 */
+#define TIMER_MODE		0x43			/* 8253模式控制寄存器I/O地址 */
+#define	RATE_GENERATOR		0x34			/* 输入到 Counter 0 的数据，00-11-010-0 */
+#define	TIMER_FREQ		1193182L		/* 计时器时钟频率 */
+#define	HZ			100			
+
 #endif

@@ -19,6 +19,7 @@ PUBLIC	void	delay(int times);
 
 /* kernel.asm */
 void	restart();
+PUBLIC	void	sys_call();
 
 /* i8259.c */
 PUBLIC	void	spurious_irq(int irq);
@@ -31,3 +32,10 @@ void	TestC();
 
 /* clock.c */
 PUBLIC	void	clock_handler(int irq);
+PUBLIC	void	milli_delay(int milli_sec);
+
+/* syscall.asm */
+PUBLIC	int	get_ticks();
+
+/* proc.c */
+PUBLIC	int	sys_get_ticks();

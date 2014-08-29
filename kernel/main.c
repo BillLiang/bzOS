@@ -10,7 +10,7 @@
 #include "global.h"
 
 PUBLIC int kernel_main(){
-	disp_str("--------\"kernel_main\" begins--------");
+	disp_str("--------\"kernel_main\" begins--------\n");
 
 	PROCESS*	p_proc		= proc_table;
 	TASK*		p_task		= task_table;
@@ -48,8 +48,14 @@ PUBLIC int kernel_main(){
 		p_task ++;
 		selector_ldt += (1 << 3);
 	}
+	ticks = 0;
 	k_reenter = 0;									/* 用于判断中断嵌套时中断是否重入 */
 	p_proc_ready = proc_table;
+
+	/* 初始化 8253 PIT，修改时钟中断间隔 */
+	out_byte(TIMER_MODE, RATE_GENERATOR);
+	out_byte(TIMER0, (u8) (TIMER_FREQ / HZ));
+	out_byte(TIMER0, (u8) ((TIMER_FREQ / HZ) >> 8));
 
 	put_irq_handler(CLOCK_IRQ, clock_handler);
 	enable_irq(CLOCK_IRQ);
@@ -66,9 +72,9 @@ void TestA(){
 	int i = 0;
 	while(1){
 		disp_str("A");
-		disp_int(i ++);
+		disp_int(get_ticks());
 		disp_str(".");
-		delay(1);
+		milli_delay(1000);
 	}
 }
 
@@ -81,7 +87,7 @@ void TestB(){
 		disp_str("B");
 		disp_int(i ++);
 		disp_str(".");
-		delay(1);
+		milli_delay(1000);
 	}
 }
 /*=================================================================================================
@@ -93,6 +99,6 @@ void TestC(){
 		disp_str("C");
 		disp_int(i ++);
 		disp_str(".");
-		delay(1);
+		milli_delay(1000);
 	}
 }

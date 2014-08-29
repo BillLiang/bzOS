@@ -18,6 +18,7 @@ extern	disp_pos
 extern	p_proc_ready
 extern	k_reenter
 extern	irq_table
+extern	sys_call_table
 
 bits	32
 
@@ -30,6 +31,7 @@ StackTop:					;栈顶
 global	_start							;导出 _start
 
 global	restart
+global	sys_call
 
 global	divide_error
 global	single_step_exception
@@ -262,7 +264,7 @@ save:
 	mov	ds, dx
 	mov	es, dx
 
-	mov	eax, esp				;这时eax为进程表的起始地址
+	mov	esi, esp				;这时eax为进程表的起始地址
 
 	inc	dword [k_reenter]
 	cmp	dword [k_reenter], 0
@@ -270,10 +272,10 @@ save:
 	mov	esp, StackTop				;非重入中断，则切换到内核栈
 	push	restart
 
-	jmp	[eax + (RETADR - P_STACKBASE)]		;注意，这里其实相当于ret掉save函数，继续执行call save的下一条指令。
+	jmp	[esi + (RETADR - P_STACKBASE)]		;注意，这里其实相当于ret掉save函数，继续执行call save的下一条指令。
 .1:							;!!因为call save的时候，CPU就把下一条指令的地址压入栈，此时的栈还不是
 	push	restart_reenter				;!!内核栈（esp指向进程栈）,于是把返回地址保存在了RETADR处了。
-	jmp	[eax + (RETADR - P_STACKBASE)]
+	jmp	[esi + (RETADR - P_STACKBASE)]
 
 ;==================================================================================================
 ;					恢复（开启）进程的执行	
@@ -294,3 +296,14 @@ restart_reenter:					;如果是中断重入那么什么也不做
 	add	esp, 4
 
 	iretd
+
+;==================================================================================================
+;					系统调用	
+;==================================================================================================
+sys_call:
+	call	save
+	sti
+	call	[sys_call_table + eax * 4]
+	mov	[esi + (EAXREG - P_STACKBASE)], eax	;把返回值存放在进程表中，当进程恢复是能正确地pop eax
+	cli
+	ret
