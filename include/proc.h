@@ -27,6 +27,10 @@ typedef struct s_proc{
 
 	u16		ldt_sel;		/* gdt selector giving ldt base and limit */
 	DESCRIPTOR	ldts[LDT_SIZE];		/* 本地描述符表，进程的一部分 */
+
+	int		ticks;			/* 进程运行的剩余ticks */
+	int		priority;
+
 	u32		pid;
 	char		p_name[32];
 }PROCESS;

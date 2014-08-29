@@ -48,6 +48,10 @@ PUBLIC int kernel_main(){
 		p_task ++;
 		selector_ldt += (1 << 3);
 	}
+	proc_table[0].ticks = proc_table[0].priority = 30;
+	proc_table[1].ticks = proc_table[1].priority = 50;
+	proc_table[2].ticks = proc_table[2].priority = 150;
+
 	ticks = 0;
 	k_reenter = 0;									/* 用于判断中断嵌套时中断是否重入 */
 	p_proc_ready = proc_table;
@@ -71,10 +75,8 @@ PUBLIC int kernel_main(){
 void TestA(){
 	int i = 0;
 	while(1){
-		disp_str("A");
-		disp_int(get_ticks());
-		disp_str(".");
-		milli_delay(1000);
+		disp_color_str("A.", BRIGHT | MAKE_COLOR(BLACK, RED));
+		milli_delay(200);
 	}
 }
 
@@ -84,10 +86,8 @@ void TestA(){
 void TestB(){
 	int i = 0x100;
 	while(1){
-		disp_str("B");
-		disp_int(i ++);
-		disp_str(".");
-		milli_delay(1000);
+		disp_color_str("B.", BRIGHT | MAKE_COLOR(BLACK, RED));
+		milli_delay(200);
 	}
 }
 /*=================================================================================================
@@ -96,9 +96,7 @@ void TestB(){
 void TestC(){
 	int i = 0x2000;
 	while(1){
-		disp_str("C");
-		disp_int(i ++);
-		disp_str(".");
-		milli_delay(1000);
+		disp_color_str("C.", BRIGHT | MAKE_COLOR(BLACK, RED));
+		milli_delay(200);
 	}
 }

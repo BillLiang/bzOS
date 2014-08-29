@@ -12,3 +12,24 @@
 PUBLIC int sys_get_ticks(){
 	return ticks;
 }
+/*==================================================================================================
+  				进程调度
+==================================================================================================*/
+PUBLIC void schedule(){
+	PROCESS*	p;
+	int		greatest_ticks = 0;
+	while(!greatest_ticks){
+		for(p=proc_table; p<proc_table + NR_TASKS; p++){
+			if(p->ticks > greatest_ticks){
+				greatest_ticks = p->ticks;
+				p_proc_ready = p;
+			}
+		}
+		/* 当所有的进程的ticks都减到零时 */
+		if(!greatest_ticks){
+			for(p=proc_table; p<proc_table + NR_TASKS; p++){
+				p->ticks = p->priority;
+			}
+		}
+	}
+}

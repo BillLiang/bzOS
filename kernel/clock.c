@@ -10,18 +10,18 @@
 #include "global.h"
 
 PUBLIC void clock_handler(int irq){
-	disp_str("^");
 	ticks ++;
+	p_proc_ready->ticks --;					/* 当前进程ticks递减 */
 	/* 如果是中断重入，什么也不干 */
 	if(k_reenter != 0){
-		disp_str("!");
 		return;
 	}
-
-	p_proc_ready ++;
-	if(p_proc_ready >= proc_table + NR_TASKS){
-		p_proc_ready = proc_table;
+	/* 如果当前进程的ticks还没有降到零 */
+	if(p_proc_ready->ticks > 0){
+		return;
 	}
+	
+	schedule();
 }
 /*==================================================================================================
   				milli_delay
