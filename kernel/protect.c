@@ -106,6 +106,15 @@ PUBLIC void init_prot(){
 	init_idt_desc(INT_VECTOR_IRQ8 + 6, DA_386IGate, hwint14, PRIVILEGE_KRNL);
 	init_idt_desc(INT_VECTOR_IRQ8 + 7, DA_386IGate, hwint15, PRIVILEGE_KRNL);
 
+	/* void* memset(void* s, int ch, size_t n)	*/
+	memset(&tss, 0, sizeof(tss));
+	tss.ss0 = SELECTOR_KERNEL_DS;
+	init_descriptor(&gdt[INDEX_TSS],
+			vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss),
+			sizeof(tss),
+			DA_386TSS );
+	tss.iobase = sizeof(tss);			/* 没有I/O位图 */
+	
 	/* 根据进程个数，初始化 GDT 中进程的 LDT 描述符 */
 	int i;
 	PROCESS* p_proc		= proc_table;
@@ -119,15 +128,6 @@ PUBLIC void init_prot(){
 		p_proc ++;
 		selector_ldt += (1 << 3);
 	}
-
-	/* void* memset(void* s, int ch, size_t n)	<string.h>*/
-	memset(&tss, 0, sizeof(tss));
-	tss.ss0 = SELECTOR_KERNEL_DS;
-	init_descriptor(&gdt[INDEX_TSS],
-			vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss),
-			sizeof(tss),
-			DA_386TSS );
-	tss.iobase = sizeof(tss);			/* 没有I/O位图 */
 }
 /*=================================================================================================
   				初始化 386 中断门

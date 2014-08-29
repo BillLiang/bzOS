@@ -17,6 +17,9 @@ extern	tss
 extern	disp_pos
 extern	p_proc_ready
 extern	k_reenter
+extern	irq_table
+
+bits	32
 
 [section .bss]					;通常指用来存放程序中未初始化的全局变量和静态变量的一块内存。在程序执行之前BSS段会自动清0，所以未初始化的全局变量在程序执行之前已经置0了。
 StackSpace			resb	2 * 1024
@@ -74,12 +77,8 @@ _start:
 
 	lidt	[idt_ptr]
 
-	jmp	SELECTOR_KERNEL_CS : csinit
-	;此跳转强制使用刚刚初始化的结构
+	jmp	SELECTOR_KERNEL_CS : csinit			;此跳转强制使用刚刚初始化的结构
 csinit:
-	;sti							;开中断
-	;hlt							;停机指令
-
 	xor	eax, eax
 	mov	ax, SELECTOR_TSS
 	ltr	ax
@@ -89,57 +88,32 @@ csinit:
 ; 中断和异常 -- 硬件中断
 ;==================================================================================================
 %macro	hwint_master	1
-	push	%1
-	call	spurious_irq
-	add	esp, 4
-	hlt
+	call	save						;!!注意此时的esp指向为进程堆栈
+
+	in	al, INT_M_CTLMASK				;不允许再发生当前中断
+	or	al, (1 << %1)
+	out	INT_M_CTLMASK, al
+
+	mov	al, EOI
+	out	INT_M_CTL, al
+
+	sti							;开中断，允许中断嵌套
+	push	%1						;把irq号进栈，作为函数参数
+	call	[irq_table + 4 * %1]
+	pop	ecx
+	cli							;关中断
+
+	in	al, INT_M_CTLMASK				;又允许时钟中断
+	and	al, ~(1 << %1)
+	out	INT_M_CTLMASK, al
+
+	ret							;!!注意这里不是iretd，因为ret弹出刚刚压入的eip，之后会执行eip指向的代码。
 %endmacro
 ;==================================================================================================
 
 align	16
 hwint00:							;irq0的中断例程（时钟）
-	sub	esp, 4
-	pushad
-	push	ds
-	push	es
-	push	fs
-	push	gs
-	
-	mov	dx, ss
-	mov	ds, dx
-	mov	es, dx
-
-	mov	al, EOI
-	out	INT_M_CTL, al
-
-	inc	dword [k_reenter]
-	cmp	dword [k_reenter], 0
-	jne	.re_enter
-
-	mov	esp, StackTop					; !!非常重要，切换到内核栈!!
-
-	sti							;开中断，允许中断嵌套
-
-	push	0						;把irq号进栈，作为函数参数
-	call	clock_handler
-	add	esp, 4
-
-	cli							;关中断
-
-	mov	esp, [p_proc_ready]
-	lldt	[esp + P_LDT_SEL]
-	lea	eax, [esp + P_STACKTOP]
-	mov	dword [tss + TSS3_S_SP0], eax
-.re_enter:
-	dec	dword [k_reenter]
-	pop	gs
-	pop	fs
-	pop	es
-	pop	ds
-	popad
-	add	esp, 4
-
-	iretd
+	hwint_master	0
 
 align	16
 hwint01:							;irq1的中断例程（键盘）
@@ -276,14 +250,41 @@ exception:
 	hlt
 
 ;==================================================================================================
-;					开启第一个进程	
+;					save	
+;==================================================================================================
+save:
+	pushad
+	push	ds
+	push	es
+	push	fs
+	push	gs
+	mov	dx, ss
+	mov	ds, dx
+	mov	es, dx
+
+	mov	eax, esp				;这时eax为进程表的起始地址
+
+	inc	dword [k_reenter]
+	cmp	dword [k_reenter], 0
+	jne	.1
+	mov	esp, StackTop				;非重入中断，则切换到内核栈
+	push	restart
+
+	jmp	[eax + (RETADR - P_STACKBASE)]		;注意，这里其实相当于ret掉save函数，继续执行call save的下一条指令。
+.1:							;!!因为call save的时候，CPU就把下一条指令的地址压入栈，此时的栈还不是
+	push	restart_reenter				;!!内核栈（esp指向进程栈）,于是把返回地址保存在了RETADR处了。
+	jmp	[eax + (RETADR - P_STACKBASE)]
+
+;==================================================================================================
+;					恢复（开启）进程的执行	
 ;==================================================================================================
 restart:
 	mov	esp, [p_proc_ready]
 	lldt	[esp + P_LDT_SEL]
 	lea	eax, [esp + P_STACKTOP]
 	mov	dword [tss + TSS3_S_SP0], eax
-
+restart_reenter:					;如果是中断重入那么什么也不做
+	dec	dword [k_reenter]
 	pop	gs
 	pop	fs
 	pop	es

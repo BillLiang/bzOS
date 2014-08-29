@@ -1,7 +1,9 @@
 
 ; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;               klib.asm	Bill Liang		2014-8-22
+;               kliba.asm	Bill Liang		2014-8-22
 ; ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+%include	"sconst.inc"
 
 ;全局变量
 extern	disp_pos
@@ -13,6 +15,9 @@ global	disp_str
 global	disp_color_str
 global	out_byte
 global	in_byte
+
+global	disable_irq
+global	enable_irq
 
 ; ========================================================================
 ;                  void disp_str(char * info);
@@ -109,4 +114,62 @@ in_byte:
 	in	al, dx					;al存放返回值，8位
 	nop
 	nop
+	ret
+
+; ========================================================================
+;		void disable_irq(int irq);
+; ========================================================================
+disable_irq:
+	mov	ecx, [esp + 4]				;irq
+	pushf						;保存flags
+	cli						;关中断
+	mov	ah, 1
+	rol	ah, cl
+	cmp	cl, 8
+	jae	disable_8
+disable_0:
+	in	al, INT_M_CTLMASK
+	test	al, ah					;是否已经disable该irq了？
+	jnz	dis_already
+	or	al, ah
+	out	INT_M_CTLMASK, al
+	popf
+	mov	eax, 1					;返回true
+	ret
+disable_8:
+	in	al, INT_S_CTLMASK
+	test	al, ah
+	jnz	dis_already
+	or	al, ah
+	out	INT_S_CTLMASK, al
+	popf
+	mov	eax, 1
+	ret
+dis_already:
+	popf
+	xor	eax, eax
+	ret
+
+; ========================================================================
+;		void enable_irq(int irq);
+; ========================================================================
+enable_irq:
+	mov	ecx, [esp + 4]
+	pushf
+	cli
+	mov	ah, ~1
+	rol	ah, cl
+	cmp	cl, 8
+	jae	enable_8
+enable_0:
+	in	al, INT_M_CTLMASK
+	and	al, ah
+	out	INT_M_CTLMASK, al
+	popf
+	ret
+enable_8:
+	in	al, INT_S_CTLMASK
+	and	al, ah
+	out	INT_S_CTLMASK, al
+	popf
 	ret

@@ -6,6 +6,8 @@
 #include "const.h"
 #include "protect.h"
 #include "proto.h"
+#include "proc.h"
+#include "global.h"
 /*=================================================================================================
 					   初始化8259A中断控制器。
 =================================================================================================*/
@@ -27,9 +29,14 @@ PUBLIC void init_8259A(){
 	
 	out_byte(INT_S_CTLMASK, 0x1);
 	/*主8259A，OCW1 (Operatione Control World)*/
-	out_byte(INT_M_CTLMASK, 0xfe);
+	out_byte(INT_M_CTLMASK, 0xff);
 	/*从8259A，OCW1 (Operatione Control World)*/
 	out_byte(INT_S_CTLMASK, 0xff);
+	/* 初始化irq_table */
+	int i;
+	for(i=0; i<NR_IRQ; i++){
+		irq_table[i] = spurious_irq;
+	}
 }
 
 /*=================================================================================================
@@ -39,4 +46,11 @@ PUBLIC void spurious_irq(int irq){
 	disp_str("spurious irq: ");
 	disp_int(irq);
 	disp_str("\n");
+}
+/*=================================================================================================
+					   put_irq_handler
+=================================================================================================*/
+PUBLIC void put_irq_handler(int irq, irq_handler handler){
+	disable_irq(irq);
+	irq_table[irq] = handler;
 }

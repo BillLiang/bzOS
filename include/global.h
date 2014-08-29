@@ -16,6 +16,8 @@ EXTERN	TSS		tss;
 EXTERN	PROCESS*	p_proc_ready;
 
 /* extern声明 */
+extern	irq_handler	irq_table[];
+
 extern	PROCESS		proc_table[];
 extern	TASK		task_table[];
 
