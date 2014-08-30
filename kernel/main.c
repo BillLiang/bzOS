@@ -1,6 +1,6 @@
 /*=================================================================================================
-  main.c			Bill Liang	2014-8-26
-  =================================================================================================*/
+		  main.c			Bill Liang	2014-8-26
+=================================================================================================*/
 #include "type.h"
 #include "const.h"
 #include "protect.h"
@@ -48,21 +48,16 @@ PUBLIC int kernel_main(){
 		p_task ++;
 		selector_ldt += (1 << 3);
 	}
-	proc_table[0].ticks = proc_table[0].priority = 30;
-	proc_table[1].ticks = proc_table[1].priority = 50;
-	proc_table[2].ticks = proc_table[2].priority = 150;
+	for(i=0; i<NR_TASKS; i++){
+		proc_table[i].ticks = proc_table[i].priority = 10;
+	}
 
 	ticks = 0;
 	k_reenter = 0;									/* 用于判断中断嵌套时中断是否重入 */
 	p_proc_ready = proc_table;
 
-	/* 初始化 8253 PIT，修改时钟中断间隔 */
-	out_byte(TIMER_MODE, RATE_GENERATOR);
-	out_byte(TIMER0, (u8) (TIMER_FREQ / HZ));
-	out_byte(TIMER0, (u8) ((TIMER_FREQ / HZ) >> 8));
-
-	put_irq_handler(CLOCK_IRQ, clock_handler);
-	enable_irq(CLOCK_IRQ);
+	init_clock();
+	init_keyboard();
 
 	restart();
 
@@ -75,7 +70,7 @@ PUBLIC int kernel_main(){
 void TestA(){
 	int i = 0;
 	while(1){
-		disp_color_str("A.", BRIGHT | MAKE_COLOR(BLACK, RED));
+		//disp_color_str("A.", BRIGHT | MAKE_COLOR(BLACK, RED));
 		milli_delay(200);
 	}
 }
@@ -86,7 +81,7 @@ void TestA(){
 void TestB(){
 	int i = 0x100;
 	while(1){
-		disp_color_str("B.", BRIGHT | MAKE_COLOR(BLACK, RED));
+		//disp_color_str("B.", BRIGHT | MAKE_COLOR(BLACK, RED));
 		milli_delay(200);
 	}
 }
@@ -96,7 +91,7 @@ void TestB(){
 void TestC(){
 	int i = 0x2000;
 	while(1){
-		disp_color_str("C.", BRIGHT | MAKE_COLOR(BLACK, RED));
+		//disp_color_str("C.", BRIGHT | MAKE_COLOR(BLACK, RED));
 		milli_delay(200);
 	}
 }

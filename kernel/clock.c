@@ -23,6 +23,16 @@ PUBLIC void clock_handler(int irq){
 	
 	schedule();
 }
+
+PUBLIC void init_clock(){
+	/* 初始化 8253 PIT，修改时钟中断间隔 */
+	out_byte(TIMER_MODE, RATE_GENERATOR);
+	out_byte(TIMER0, (u8) (TIMER_FREQ / HZ));
+	out_byte(TIMER0, (u8) ((TIMER_FREQ / HZ) >> 8));
+
+	put_irq_handler(CLOCK_IRQ, clock_handler);
+	enable_irq(CLOCK_IRQ);
+}
 /*==================================================================================================
   				milli_delay
 ==================================================================================================*/

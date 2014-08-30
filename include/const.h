@@ -44,7 +44,7 @@
 
 #define	NR_IRQ			16
 #define CLOCK_IRQ		0
-#define	KERBOARD_IRQ		1
+#define	KEYBOARD_IRQ		1
 #define	CASCADE_IRQ		2
 #define	ETHER_IRQ		3
 #define	SECONDARY_IRQ		3
@@ -63,5 +63,10 @@
 #define	RATE_GENERATOR		0x34			/* 输入到 Counter 0 的数据，00-11-010-0 */
 #define	TIMER_FREQ		1193182L		/* 计时器时钟频率 */
 #define	HZ			100			
+
+/* 键盘 */
+/* 8042键盘控制器端口 */
+#define KB_DATA			0x60			/* 数据缓冲区，读/写 */
+#define	KB_CMD			0x64			/* 读：状态	写：发送命令 */
 
 #endif

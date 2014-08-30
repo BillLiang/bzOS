@@ -32,6 +32,7 @@ void	TestC();
 
 /* clock.c */
 PUBLIC	void	clock_handler(int irq);
+PUBLIC	void	init_clock();
 PUBLIC	void	milli_delay(int milli_sec);
 
 /* syscall.asm */
@@ -40,3 +41,11 @@ PUBLIC	int	get_ticks();
 /* proc.c */
 PUBLIC	int	sys_get_ticks();
 PUBLIC	void	schedule();
+
+/* keyboard.c */
+PUBLIC	void	init_keyboard();
+PUBLIC	void	keyboard_read();
+
+/* tty.c */
+PUBLIC	void	task_tty();
+PUBLIC	void	in_process(u32 key);
