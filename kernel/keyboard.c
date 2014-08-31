@@ -4,6 +4,8 @@
 #include "type.h"
 #include "const.h"
 #include "protect.h"
+#include "console.h"
+#include "tty.h"
 #include "proto.h"
 #include "string.h"
 #include "proc.h"
@@ -61,7 +63,7 @@ PUBLIC void init_keyboard(){
 /*=================================================================================================
   					处理键盘输入
 =================================================================================================*/
-PUBLIC void keyboard_read(){
+PUBLIC void keyboard_read(TTY* p_tty){
 	u8	scan_code;
 	int	make;
 	u32	key = 0;
@@ -161,7 +163,7 @@ PUBLIC void keyboard_read(){
 				key |= alt_l	? FLAG_ALT_L : 0;
 				key |= alt_r	? FLAG_ALT_R : 0;
 				/* 处理32位的按键信息 */
-				in_process(key);
+				in_process(p_tty, key);
 			}
 		}
 	}

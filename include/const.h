@@ -69,4 +69,17 @@
 #define KB_DATA			0x60			/* 数据缓冲区，读/写 */
 #define	KB_CMD			0x64			/* 读：状态	写：发送命令 */
 
+/* VGA */
+#define	CRTC_ADDR_REG		0x3d4			/* CRT control registers 之 addr register */
+#define	CRTC_DATA_REG		0x3d5			/* CRT control registers 之 data registers */
+#define	START_ADDR_H		0xc			/* reg index of video mem start addr (MSB) */
+#define	START_ADDR_L		0xd			/* reg index of video mem start addr (LSB) */
+#define	CURSOR_H		0xe			/* reg index of cursor position (MSB) */
+#define	CURSOR_L		0xf			/* reg index of cursor position (LSB) */
+#define	V_MEM_BASE		0xb8000			/* base of color video memory */
+#define	V_MEM_SIZE		0x8000			/* 32K: 0xb8000~0xbffff */
+/* TTY */
+#define	NR_CONSOLES		3			/* 控制台个数 */
+
+
 #endif

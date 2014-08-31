@@ -16,6 +16,8 @@ EXTERN	TSS		tss;
 EXTERN	PROCESS*	p_proc_ready;
 
 EXTERN	int		ticks;
+
+EXTERN	int		nr_current_console;
 /* extern声明 */
 extern	irq_handler	irq_table[];
 
@@ -25,3 +27,6 @@ extern	TASK		task_table[];
 extern	char		task_stack[];
 
 extern	system_call	sys_call_table[];
+
+extern	TTY		tty_table[];
+extern	CONSOLE		console_table[];

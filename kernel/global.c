@@ -3,6 +3,8 @@
 #include	"type.h"
 #include	"const.h"
 #include	"protect.h"
+#include	"console.h"
+#include	"tty.h"
 #include	"proto.h"
 #include	"proc.h"
 #include	"global.h"
@@ -21,3 +23,7 @@ PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
 
 /* 系统调用 */
 PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_get_ticks};
+
+/* TTY */
+PUBLIC	TTY		tty_table[NR_CONSOLES];
+PUBLIC	CONSOLE		console_table[NR_CONSOLES];

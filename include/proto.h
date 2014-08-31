@@ -44,8 +44,14 @@ PUBLIC	void	schedule();
 
 /* keyboard.c */
 PUBLIC	void	init_keyboard();
-PUBLIC	void	keyboard_read();
+PUBLIC	void	keyboard_read(TTY* p_tty);
 
 /* tty.c */
 PUBLIC	void	task_tty();
-PUBLIC	void	in_process(u32 key);
+PUBLIC	void	in_process(TTY* p_tty, u32 key);
+
+/* console.c */
+PUBLIC	int	is_current_console(CONSOLE* p_con);
+PUBLIC	void	out_char(CONSOLE* p_con, char ch);
+PUBLIC	void	init_screen(TTY* p_tty);
+PUBLIC	void	scroll_screen(CONSOLE* p_con, int direction);
