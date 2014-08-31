@@ -41,8 +41,9 @@ typedef struct s_task{				/* 任务，初始化进程用 */
 	char	name[32];
 }TASK;
 
-/* 任务的数量 */
-#define	NR_TASKS	4
+/* 任务&进程的数量 */
+#define	NR_TASKS	1
+#define	NR_PROCS	3
 
 /* 任务的栈 */
 #define	STACK_SIZE_TESTA	0x8000
