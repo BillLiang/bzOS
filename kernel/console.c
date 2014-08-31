@@ -13,6 +13,7 @@
 #include "tty.h"
 
 PRIVATE void set_cursor(u32 position);
+PRIVATE void flush(CONSOLE* p_con);
 /**================================================================================================
  * 判断控制台是否是当前控制台。
  * @param p_con 控制台
@@ -29,11 +30,36 @@ PUBLIC void out_char(CONSOLE* p_con, char ch){
 	/* 字符地址，指针类型为char */
 	u8* p_vmem = (u8*) (V_MEM_BASE + p_con->cursor * 2);	
 	
-	*p_vmem ++ = ch;
-	*p_vmem ++ = DEFAULT_CHAR_COLOR;
-	p_con->cursor ++;
-
-	set_cursor(p_con->cursor);
+	switch(ch){
+	case '\n':
+		/* 如果不是最后一行 */
+		if(p_con->cursor < p_con->original_addr + p_con->v_mem_limit - SCREEN_WIDTH * 2){
+			p_con->cursor = p_con->original_addr + 
+					SCREEN_WIDTH * ((p_con->cursor - p_con->original_addr) / SCREEN_WIDTH + 1);
+		}
+		break;
+	case '\b':
+		if(p_con->cursor > p_con->original_addr){
+			p_con->cursor --;
+			*(p_vmem - 2) = ' ';
+			*(p_vmem - 1) = DEFAULT_CHAR_COLOR;
+		}
+		break;
+	default:
+		/* 防止字符越界（不是很准确） */
+		if(p_con->cursor < p_con->original_addr + p_con->v_mem_limit - SCREEN_WIDTH - 1){
+			*p_vmem ++ = ch;
+			*p_vmem ++ = DEFAULT_CHAR_COLOR;
+			p_con->cursor ++;
+		}
+		break;
+	}
+	/* 字符超出屏幕则滚屏 */
+	if(p_con->cursor >= p_con->current_start_addr + SCREEN_SIZE){
+		scroll_screen(p_con, SCR_DN);
+	}
+	/* 刷新 */
+	flush(p_con);
 }
 /**================================================================================================
  * 设置当前光标位置。
@@ -111,7 +137,7 @@ PUBLIC void scroll_screen(CONSOLE* p_con, int direction){
 			p_con->current_start_addr -= SCREEN_WIDTH;
 		}
 	}else if(direction == SCR_DN){
-		if(p_con->current_start_addr + SCREEN_SIZE < p_con->original_addr + p_con->v_mem_limit){
+		if(p_con->current_start_addr + SCREEN_SIZE + SCREEN_WIDTH < p_con->original_addr + p_con->v_mem_limit){
 			p_con->current_start_addr += SCREEN_WIDTH;
 		}
 	}else{
@@ -119,4 +145,12 @@ PUBLIC void scroll_screen(CONSOLE* p_con, int direction){
 	}
 	set_video_start_addr(p_con->current_start_addr);
 	set_cursor(p_con->cursor);
+}
+/**================================================================================================
+ * 刷新屏幕。
+ * @param p_con
+ ================================================================================================*/
+PRIVATE void flush(CONSOLE* p_con){
+	set_cursor(p_con->cursor);
+	set_video_start_addr(p_con->current_start_addr);
 }

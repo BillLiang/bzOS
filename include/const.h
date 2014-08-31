@@ -69,6 +69,9 @@
 #define KB_DATA			0x60			/* 数据缓冲区，读/写 */
 #define	KB_CMD			0x64			/* 读：状态	写：发送命令 */
 
+#define	LED_CODE		0xed
+#define	KB_ACK			0xfa
+
 /* VGA */
 #define	CRTC_ADDR_REG		0x3d4			/* CRT control registers 之 addr register */
 #define	CRTC_DATA_REG		0x3d5			/* CRT control registers 之 data registers */
