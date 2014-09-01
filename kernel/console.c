@@ -6,8 +6,8 @@
 #include "protect.h"
 #include "console.h"
 #include "tty.h"
-#include "proto.h"
 #include "proc.h"
+#include "proto.h"
 #include "global.h"
 #include "console.h"
 #include "tty.h"
@@ -151,6 +151,8 @@ PUBLIC void scroll_screen(CONSOLE* p_con, int direction){
  * @param p_con
  ================================================================================================*/
 PRIVATE void flush(CONSOLE* p_con){
-	set_cursor(p_con->cursor);
-	set_video_start_addr(p_con->current_start_addr);
+	if(is_current_console(p_con)){
+		set_cursor(p_con->cursor);
+		set_video_start_addr(p_con->current_start_addr);
+	}
 }

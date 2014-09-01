@@ -55,7 +55,7 @@
 #define	AT_WINT_IRQ		14
 
 /* 系统调用 */
-#define	NR_SYS_CALL		1
+#define	NR_SYS_CALL		2
 
 /* 8253/8254 PIT (Programmable Interval Timer)可编程间隔计时器 */
 #define	TIMER0			0x40			/* I/O端口计时器 Counter 0 */

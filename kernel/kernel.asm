@@ -302,8 +302,14 @@ restart_reenter:					;如果是中断重入那么什么也不做
 ;==================================================================================================
 sys_call:
 	call	save
+	push	dword [p_proc_ready]
 	sti
+
+	push	ecx
+	push	ebx
 	call	[sys_call_table + eax * 4]
+	add	esp, 4 * 3
+
 	mov	[esi + (EAXREG - P_STACKBASE)], eax	;把返回值存放在进程表中，当进程恢复是能正确地pop eax
 	cli
 	ret

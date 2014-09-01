@@ -3,5 +3,5 @@
 =================================================================================================*/
 PUBLIC	void*	memcpy(void* pDst, void* pSrc, int iSize);
 PUBLIC	void	memset(void* pDst, char ch, int size);
-PUBLIC	char*	strcpy(char* pDst, char* pSrc);	
-
+PUBLIC	char*	strcpy(char* pDst, char* pSrc);
+PUBLIC	int	strlen(char* p_str);

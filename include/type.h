@@ -11,4 +11,6 @@ typedef void (*int_handler)();
 typedef void (*task_f)();
 
 typedef	void* system_call;
+
+typedef char* va_list;
 #endif

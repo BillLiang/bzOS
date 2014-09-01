@@ -33,6 +33,8 @@ typedef struct s_proc{
 
 	u32		pid;
 	char		p_name[32];
+
+	int		nr_tty;			/* 为进程指定TTY */
 }PROCESS;
 
 typedef struct s_task{				/* 任务，初始化进程用 */

@@ -1,13 +1,13 @@
 #define GLOBAL_VARIABLES_HERE
 
-#include	"type.h"
-#include	"const.h"
-#include	"protect.h"
-#include	"console.h"
-#include	"tty.h"
-#include	"proto.h"
-#include	"proc.h"
-#include	"global.h"
+#include "type.h"
+#include "const.h"
+#include "protect.h"
+#include "console.h"
+#include "tty.h"
+#include "proc.h"
+#include "global.h"
+#include "proto.h"
 
 /* irq处理例程 */
 PUBLIC	irq_handler	irq_table[NR_IRQ];
@@ -24,7 +24,7 @@ PUBLIC	TASK		user_proc_table[NR_PROCS] = {{TestA, STACK_SIZE_TESTA, "TestA"},
 PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
 
 /* 系统调用 */
-PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_get_ticks};
+PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_get_ticks, sys_write};
 
 /* TTY */
 PUBLIC	TTY		tty_table[NR_CONSOLES];

@@ -6,9 +6,9 @@
 #include "protect.h"
 #include "console.h"
 #include "tty.h"
-#include "proto.h"
-#include "string.h"
 #include "proc.h"
+#include "string.h"
+#include "proto.h"
 #include "global.h"
 
 PUBLIC int kernel_main(){
@@ -56,18 +56,23 @@ PUBLIC int kernel_main(){
 		p_proc->regs.ss = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;		/* ss为指向LDT第二个描述符的选择子 */
 		p_proc->regs.gs = (SELECTOR_KERNEL_GS & SA_RPL_MASK) | rpl;		/* gs仍然指向显存，只是改变了DPL让其在低特权级下运行 */
 	
-		p_proc->regs.eip = (u32) p_task->initial_eip;					/* eip为指向进程体 */
-		p_proc->regs.esp = (u32) p_task_stack;						/* esp指向新的栈底 */
+		p_proc->regs.eip = (u32) p_task->initial_eip;				/* eip为指向进程体 */
+		p_proc->regs.esp = (u32) p_task_stack;					/* esp指向新的栈底 */
 		p_proc->regs.eflags = eflags;
+
+		p_proc->nr_tty = 0;							/* 默认TTY为0 */
 
 		p_task_stack -= p_task->stacksize;
 		p_proc ++;
 		p_task ++;
 		selector_ldt += (1 << 3);
 	}
-	for(i=0; i<NR_TASKS; i++){
+	for(i=0; i<NR_TASKS + NR_PROCS; i++){
 		proc_table[i].ticks = proc_table[i].priority = 10;
 	}
+	proc_table[1].nr_tty = 0;
+	proc_table[2].nr_tty = 1;
+	proc_table[3].nr_tty = 1;
 
 	ticks = 0;
 	k_reenter = 0;									/* 用于判断中断嵌套时中断是否重入 */
@@ -84,10 +89,9 @@ PUBLIC int kernel_main(){
   					一个进程体
 =================================================================================================*/
 void TestA(){
-	int i = 0;
 	while(1){
-		//disp_color_str("A.", BRIGHT | MAKE_COLOR(BLACK, RED));
-		milli_delay(200);
+		printf("<%s:%d>", "ticks", get_ticks());
+		milli_delay(2000);
 	}
 }
 
@@ -95,19 +99,17 @@ void TestA(){
   					一个进程体
 =================================================================================================*/
 void TestB(){
-	int i = 0x100;
 	while(1){
-		//disp_color_str("B.", BRIGHT | MAKE_COLOR(BLACK, RED));
-		milli_delay(200);
+		printf("B");
+		milli_delay(2000);
 	}
 }
 /*=================================================================================================
   					一个进程体
 =================================================================================================*/
 void TestC(){
-	int i = 0x2000;
 	while(1){
-		//disp_color_str("C.", BRIGHT | MAKE_COLOR(BLACK, RED));
-		milli_delay(200);
+		printf("C");
+		milli_delay(2000);
 	}
 }

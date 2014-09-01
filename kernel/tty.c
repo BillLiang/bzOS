@@ -6,9 +6,9 @@
 #include "protect.h"
 #include "console.h"
 #include "tty.h"
-#include "proto.h"
-#include "string.h"
 #include "proc.h"
+#include "string.h"
+#include "proto.h"
 #include "global.h"
 #include "keyboard.h"
 
@@ -140,4 +140,22 @@ PUBLIC void in_process(TTY* p_tty, u32 key){
 			break;
 		}
 	}
+}
+/*=================================================================================================
+ *					tty_write 
+=================================================================================================*/
+PUBLIC void tty_write(TTY* p_tty, char* buf, int len){
+	char*	p = buf;
+	int	i = len;
+	while(i){
+		out_char(p_tty->p_console, *p++);
+		i --;
+	}
+}
+/*=================================================================================================
+ *					sys_write 
+=================================================================================================*/
+PUBLIC int sys_write(char* buf, int len, PROCESS* p_proc){
+	tty_write(&tty_table[p_proc->nr_tty], buf, len);
+	return 0;
 }
