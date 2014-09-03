@@ -260,9 +260,14 @@ save:
 	push	es
 	push	fs
 	push	gs
+
+	mov	esi, edx				;因为接下来会破坏edx，edx在sys_call中作为参数传递。这里不能用push保存
+
 	mov	dx, ss
 	mov	ds, dx
 	mov	es, dx
+			
+	mov	edx, esi
 
 	mov	esi, esp				;这时eax为进程表的起始地址
 
@@ -302,13 +307,18 @@ restart_reenter:					;如果是中断重入那么什么也不做
 ;==================================================================================================
 sys_call:
 	call	save
-	push	dword [p_proc_ready]
 	sti
 
+	push	esi					;确保esi不被破坏
+
+	push	dword [p_proc_ready]
+	push	edx
 	push	ecx
 	push	ebx
 	call	[sys_call_table + eax * 4]
-	add	esp, 4 * 3
+	add	esp, 4 * 4
+
+	pop	esi
 
 	mov	[esi + (EAXREG - P_STACKBASE)], eax	;把返回值存放在进程表中，当进程恢复是能正确地pop eax
 	cli

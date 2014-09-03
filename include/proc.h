@@ -43,6 +43,8 @@ typedef struct s_task{				/* 任务，初始化进程用 */
 	char	name[32];
 }TASK;
 
+#define	proc2pid(x)	(x - proc_table)
+
 /* 任务&进程的数量 */
 #define	NR_TASKS	1
 #define	NR_PROCS	3

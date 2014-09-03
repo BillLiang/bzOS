@@ -30,6 +30,7 @@ PUBLIC	void	put_irq_handler(int irq, irq_handler handler);
 void	TestA();
 void	TestB();
 void	TestC();
+PUBLIC	void	panic(const char* fmt, ...);
 
 /* clock.c */
 PUBLIC	void	clock_handler(int irq);
@@ -38,7 +39,7 @@ PUBLIC	void	milli_delay(int milli_sec);
 
 /* syscall.asm */
 PUBLIC	int	get_ticks();
-PUBLIC	void	write(char* buf, int len);
+PUBLIC	void	printx(char* s);
 
 /* proc.c */
 PUBLIC	int	sys_get_ticks();
@@ -51,7 +52,7 @@ PUBLIC	void	keyboard_read(TTY* p_tty);
 /* tty.c */
 PUBLIC	void	task_tty();
 PUBLIC	void	in_process(TTY* p_tty, u32 key);
-PUBLIC	int	sys_write(char* buf, int len, PROCESS* p_proc);
+PUBLIC	int	sys_printx(int _unused1, int _unused2, char* s, PROCESS* p_proc);
 
 /* console.c */
 PUBLIC	int	is_current_console(CONSOLE* p_con);
@@ -61,3 +62,7 @@ PUBLIC	void	scroll_screen(CONSOLE* p_con, int direction);
 
 /* printf.c */
 PUBLIC	int	printf(const char* fmt, ...);
+
+/* lib/misc.c */
+PUBLIC	void	spin(char* func_name);
+#define	printl	printf

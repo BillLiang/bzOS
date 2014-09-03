@@ -4,7 +4,9 @@
 #ifndef	_BZOS_CONSOLE_H_
 #define	_BZOS_CONSOLE_H_
 
-#define	DEFAULT_CHAR_COLOR	0x07		/* 黑底白字 */
+#define	DEFAULT_CHAR_COLOR	(MAKE_COLOR(BLACK, WHITE))		/* 黑底白字 */
+#define	GRAY_CHAR		(MAKE_COLOR(BLACK, BLACK) | BRIGHT)	
+#define	RED_CHAR		(MAKE_COLOR(BLUE, RED) | BRIGHT)
 
 #define	SCR_UP			1
 #define	SCR_DN			-1

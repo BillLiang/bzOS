@@ -52,6 +52,10 @@ PUBLIC int vsprintf(char* buf, const char* fmt, va_list args){
 			}
 			args += 4;
 			break;
+		case 'c':
+			*buf ++ = *((char*)args);
+			args += 4;
+			break;
 		case 'x':
 			itoa(tmp, *((int*) args));
 			strcpy(buf, tmp);
@@ -72,8 +76,9 @@ PUBLIC int printf(const char* fmt, ...){
 
 	va_list arg = (va_list) ((char*)(&fmt) + 4);		/* 参数 */
 	i = vsprintf(buf, fmt, arg);
+	buf[i] = 0;
 
-	write(buf, i);
+	printx(buf);						/* system call 'sys_printx()' */
 
 	return i;
 }

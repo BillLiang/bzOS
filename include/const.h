@@ -1,7 +1,17 @@
 #ifndef _BZOS_CONST_H_
 #define	_BZOS_CONST_H_
 
-//函数类型
+/* 断言 */
+#define	ASSERT
+#ifdef	ASSERT
+void assertion_failure(char* exp, char* file, char* base_file, int line);
+#define assert(exp)	if(exp) ; \
+	else assertion_failure(#exp, __FILE__, __BASE_FILE__, __LINE__);
+#else
+#define	assert(exp)
+#endif
+
+/* 函数类型 */
 #define PUBLIC
 #define PRIVATE	static
 
@@ -84,5 +94,7 @@
 /* TTY */
 #define	NR_CONSOLES		3			/* 控制台个数 */
 
-
+/* magic chars used by 'sys_printx' */
+#define	MAG_CH_PANIC		'\002'
+#define	MAG_CH_ASSERT		'\003'
 #endif

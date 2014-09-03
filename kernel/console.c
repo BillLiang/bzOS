@@ -28,7 +28,7 @@ PUBLIC int is_current_console(CONSOLE* p_con){
  ================================================================================================*/
 PUBLIC void out_char(CONSOLE* p_con, char ch){
 	/* 字符地址，指针类型为char */
-	u8* p_vmem = (u8*) (V_MEM_BASE + p_con->cursor * 2);	
+	u8* p_vmem = (u8*) (V_MEM_BASE + p_con->cursor * 2);
 	
 	switch(ch){
 	case '\n':
@@ -123,8 +123,7 @@ PUBLIC void select_console(int nr_console){
 	}
 	nr_current_console = nr_console;
 	
-	set_cursor(console_table[nr_console].cursor);
-	set_video_start_addr(console_table[nr_console].current_start_addr);
+	flush(&console_table[nr_console]);
 }
 /**================================================================================================
  * 滚动屏幕。
@@ -143,8 +142,7 @@ PUBLIC void scroll_screen(CONSOLE* p_con, int direction){
 	}else{
 		return;
 	}
-	set_video_start_addr(p_con->current_start_addr);
-	set_cursor(p_con->cursor);
+	flush(p_con);
 }
 /**================================================================================================
  * 刷新屏幕。

@@ -88,6 +88,8 @@ typedef struct s_tss{
 /* 每个任务都有一个单独的LDT，每一个LDT中的描述符个数 */
 #define	LDT_SIZE	2
 
+#define	INDEX_LDT_C	0
+#define	INDEX_LDT_RW	1
 
 /* 描述符类型说明 */
 #define	DA_32				0x4000	/* 32位段 */
