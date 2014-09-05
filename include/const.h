@@ -46,9 +46,9 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define	RPL_TASK	SA_RPL1
 #define	RPL_USER	SA_RPL3
 
-//8259A中断处理器的端口。
-#define INT_M_CTL		0x20			//中断命令寄存器I/O地址（主片）
-#define	INT_M_CTLMASK		0x21			//中断屏蔽寄存器I/O地址（主片）
+/* 8259A中断处理器的端口 */
+#define INT_M_CTL		0x20			/* 中断命令寄存器I/O地址（主片） */
+#define	INT_M_CTLMASK		0x21			/* 中断屏蔽寄存器I/O地址（主片） */
 #define	INT_S_CTL		0xa0
 #define	INT_S_CTLMASK		0xa1
 
@@ -94,7 +94,34 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 /* TTY */
 #define	NR_CONSOLES		3			/* 控制台个数 */
 
+/**************************************************************************************************
+ * 					Message Mechanism
+ *************************************************************************************************/
 /* magic chars used by 'sys_printx' */
 #define	MAG_CH_PANIC		'\002'
 #define	MAG_CH_ASSERT		'\003'
+
+/* process status */
+#define	SENDING			0x02			/* set when proc trying to send message */
+#define	RECEIVING		0x04			/* set when proc trying to receive message */
+
+/* system tasks */
+#define TASK_TTY		0			/* TASK_XXX must be corresponding with global.c  */
+#define	TASK_SYS		1
+
+#define	INTERRUPT		-10
+#define	ANY			(NR_TASKS + NR_PROCS + 10)
+#define	NO_TASK			(NR_TASKS + NR_PROCS + 20)
+
+/* IPC */
+#define	SEND			1
+#define	RECEIVE			2
+#define	BOTH			3			/* BOTH = (SEND | RECEIVE) */
+
+#define	RETVAL			u.m3.m3i1		/* return value */
+enum	msgtype{
+	HARD_INT	= 1,				/* when hard interrupt occurs, a msg with type == HARD_INT will be sent to some tasks */
+	GET_TICKS,					/* value is 2 */
+};
+
 #endif

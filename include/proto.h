@@ -27,6 +27,7 @@ PUBLIC	void	spurious_irq(int irq);
 PUBLIC	void	put_irq_handler(int irq, irq_handler handler);
 
 /* main.c */
+PUBLIC	int	get_ticks();
 void	TestA();
 void	TestB();
 void	TestC();
@@ -38,11 +39,15 @@ PUBLIC	void	init_clock();
 PUBLIC	void	milli_delay(int milli_sec);
 
 /* syscall.asm */
-PUBLIC	int	get_ticks();
+PUBLIC	int	sendrec(int function, int src_dest, MESSAGE* msg);
 PUBLIC	void	printx(char* s);
 
+/* systask.c */
+PUBLIC	void	task_sys();
+
 /* proc.c */
-PUBLIC	int	sys_get_ticks();
+PUBLIC	void	reset_msg(MESSAGE* msg);
+PUBLIC	int	sys_sendrec(int function, int src_dest, MESSAGE* msg, PROCESS* proc);
 PUBLIC	void	schedule();
 
 /* keyboard.c */

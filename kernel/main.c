@@ -24,21 +24,25 @@ PUBLIC int kernel_main(){
 	u8		privilege;
 	u8		rpl;
 	int		eflags;
-	/* 初始化进程表 */
+
+	int		prio;						/* priority */
+	/* initialize the proc table */
 	for(i=0; i<NR_TASKS + NR_PROCS; i++){
-		if(i < NR_TASKS){					/* 任务，在ring0运行 */
+		if(i < NR_TASKS){					/* TASKS, running in Ring1 */
 			p_task		= task_table + i;
 			privilege	= PRIVILEGE_TASK;
 			rpl		= RPL_TASK;
-			eflags		= 0x1202;			/* IF=1, IOPL=1, bit 2 总是 1 */
-		}else{							/* 用户进程，在ring3运行 */
+			eflags		= 0x1202;			/* IF=1, IOPL=1, bit 2 always 1 */
+			prio		= 15;				/* default priority of a task */
+		}else{							/* USER PROC, running in Ring3 */
 			p_task		= user_proc_table + (i - NR_TASKS);
 			privilege	= PRIVILEGE_USER;
 			rpl		= RPL_USER;
-			eflags		= 0x202;			/* IF=1, bit 2 总是 1 */
+			eflags		= 0x202;			/* IF=1, bit 2 always 1 */
+			prio		= 5;
 		}
 
-		strcpy(p_proc->p_name, p_task->name);
+		strcpy(p_proc->name, p_task->name);
 		p_proc->pid = i;
 
 		p_proc->ldt_sel = selector_ldt;						/* 当前进程的LDT在GDT中选择子 */
@@ -62,17 +66,24 @@ PUBLIC int kernel_main(){
 
 		p_proc->nr_tty = 0;							/* 默认TTY为0 */
 
+		p_proc->flags		= 0;						/* this proc is runnable */
+		p_proc->p_msg		= 0;						/* null message */
+		p_proc->recv_from	= NO_TASK;
+		p_proc->send_to		= NO_TASK;
+		p_proc->has_int_msg	= 0;
+		p_proc->q_sending	= 0;
+		p_proc->next_sending	= 0;
+
+		p_proc->ticks = p_proc->priority = prio;
+	
 		p_task_stack -= p_task->stacksize;
 		p_proc ++;
 		p_task ++;
 		selector_ldt += (1 << 3);
 	}
-	for(i=0; i<NR_TASKS + NR_PROCS; i++){
-		proc_table[i].ticks = proc_table[i].priority = 10;
-	}
-	proc_table[1].nr_tty = 0;
-	proc_table[2].nr_tty = 1;
-	proc_table[3].nr_tty = 1;
+	proc_table[NR_TASKS + 0].nr_tty = 0;
+	proc_table[NR_TASKS + 1].nr_tty = 1;
+	proc_table[NR_TASKS + 2].nr_tty = 1;
 
 	ticks = 0;
 	k_reenter = 0;									/* 用于判断中断嵌套时中断是否重入 */
@@ -84,13 +95,24 @@ PUBLIC int kernel_main(){
 
 	while(TRUE){}
 }
+/*=================================================================================================
+  					get_ticks()
+=================================================================================================*/
+PUBLIC int get_ticks(){
+	MESSAGE	msg;
+
+	reset_msg(&msg);
+	msg.type	= GET_TICKS;
+	send_recv(BOTH, TASK_SYS, &msg);
+	return msg.RETVAL;
+}
 
 /*=================================================================================================
   					一个进程体
 =================================================================================================*/
 void TestA(){
 	while(TRUE){
-		//printf("<%s:%d>", "ticks", get_ticks());
+		printf("<%s:%d>", "ticks", get_ticks());
 		milli_delay(2000);
 	}
 }
@@ -100,7 +122,7 @@ void TestA(){
 =================================================================================================*/
 void TestB(){
 	while(TRUE){
-		//printf("B");
+		printf("B");
 		milli_delay(2000);
 	}
 }
@@ -109,7 +131,7 @@ void TestB(){
 =================================================================================================*/
 void TestC(){
 	while(TRUE){
-		//printf("C");
+		printf("C");
 		milli_delay(2000);
 	}
 }

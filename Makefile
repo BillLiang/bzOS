@@ -21,7 +21,7 @@ CFLAGS		= -I include/ -c -fno-builtin -fno-stack-protector
 BOOTINCLUDE	= boot/include/fat12hdr.inc boot/include/load.inc boot/include/pm.inc
 OBJS		= kernel/kernel.o kernel/start.o kernel/i8259.o kernel/protect.o \
 		  kernel/global.o kernel/main.o kernel/clock.o kernel/proc.o kernel/syscall.o \
-		  kernel/keyboard.o kernel/tty.o kernel/console.o kernel/printf.o\
+		  kernel/keyboard.o kernel/tty.o kernel/console.o kernel/printf.o kernel/systask.o \
 		  lib/klib.o lib/kliba.o lib/string.o lib/misc.o
 
 BZOSBOOT	= boot/boot.bin boot/loader.bin
@@ -104,6 +104,9 @@ kernel/console.o: kernel/console.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 kernel/printf.o: kernel/printf.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+kernel/systask.o: kernel/systask.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 lib/klib.o: lib/klib.c
