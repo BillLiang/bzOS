@@ -22,6 +22,8 @@ BOOTINCLUDE	= boot/include/fat12hdr.inc boot/include/load.inc boot/include/pm.in
 OBJS		= kernel/kernel.o kernel/start.o kernel/i8259.o kernel/protect.o \
 		  kernel/global.o kernel/main.o kernel/clock.o kernel/proc.o kernel/syscall.o \
 		  kernel/keyboard.o kernel/tty.o kernel/console.o kernel/printf.o kernel/systask.o \
+		  kernel/hd.o \
+		  fs/main.o \
 		  lib/klib.o lib/kliba.o lib/string.o lib/misc.o
 
 BZOSBOOT	= boot/boot.bin boot/loader.bin
@@ -107,6 +109,12 @@ kernel/printf.o: kernel/printf.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 kernel/systask.o: kernel/systask.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+kernel/hd.o: kernel/hd.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+fs/main.o: fs/main.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 lib/klib.o: lib/klib.c

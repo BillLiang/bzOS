@@ -21,6 +21,8 @@ global	enable_irq
 global	disable_int
 global	enable_int
 
+global	port_read
+global	port_write
 ; ========================================================================
 ;                  void disp_str(char * info);
 ; ========================================================================
@@ -116,6 +118,29 @@ in_byte:
 	in	al, dx					;al存放返回值，8位
 	nop
 	nop
+	ret
+; ========================================================================
+;		void port_read(u16 port, void* buf, int n);
+; ========================================================================
+port_read:
+	mov	edx, [esp + 4]		; dx -> port
+	mov	edi, [esp + 8]		; edi -> buf
+	mov	ecx, [esp + 12]		; ecx -> n (count)
+	shr	ecx, 1			; beacause we read a word everytime
+	cld
+	rep	insw			; input from port to string
+	ret
+
+; ========================================================================
+;		void port_write(u16 port, void* buf, int n);
+; ========================================================================
+port_write:
+	mov	edx, [esp + 4]		; dx -> port
+	mov	esi, [esp + 8]		; esi -> buf
+	mov	ecx, [esp + 12]		; ecx -> n (count)
+	shr	ecx, 1			; beacause we write a word everytime
+	cld
+	rep	outsw			; output string to port
 	ret
 
 ; ========================================================================

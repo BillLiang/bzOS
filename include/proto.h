@@ -4,6 +4,8 @@
 /* kliba.asm */
 PUBLIC	void	out_byte(u16 port, u8 value);
 PUBLIC	u8	in_byte(u16 port);
+PUBLIC	void	port_read(u16 port, void* buf, int n);
+PUBLIC	void	port_write(u16 port, void* buf, int n);
 PUBLIC	void	disp_str(char* info);
 PUBLIC	void	disp_color_str(char* info, int color);
 PUBLIC	void	disable_irq(int irq);
@@ -49,6 +51,9 @@ PUBLIC	void	task_sys();
 PUBLIC	void	reset_msg(MESSAGE* msg);
 PUBLIC	int	sys_sendrec(int function, int src_dest, MESSAGE* msg, PROCESS* proc);
 PUBLIC	void	schedule();
+PUBLIC	void	inform_int(int task_nr);
+PUBLIC	void	dump_msg(const char* title, MESSAGE* m);
+PUBLIC	void	dump_proc(PROCESS* p);
 
 /* keyboard.c */
 PUBLIC	void	init_keyboard();
@@ -64,6 +69,13 @@ PUBLIC	int	is_current_console(CONSOLE* p_con);
 PUBLIC	void	out_char(CONSOLE* p_con, char ch);
 PUBLIC	void	init_screen(TTY* p_tty);
 PUBLIC	void	scroll_screen(CONSOLE* p_con, int direction);
+
+/* hd.c */
+PUBLIC	void	task_hd();
+PUBLIC	void	hd_handler(int irq);
+
+/* fs/main.c */
+PUBLIC	void	task_fs();
 
 /* printf.c */
 PUBLIC	int	printf(const char* fmt, ...);

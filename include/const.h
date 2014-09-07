@@ -15,6 +15,8 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define PUBLIC
 #define PRIVATE	static
 
+#define	STR_DEFAULT_LEN		1024
+
 /*除了在global.c中，EXTERN被定义为extern*/
 #define	EXTERN	extern
 
@@ -108,6 +110,7 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 /* system tasks */
 #define TASK_TTY		0			/* TASK_XXX must be corresponding with global.c  */
 #define	TASK_SYS		1
+#define TASK_HD			2
 
 #define	INTERRUPT		-10
 #define	ANY			(NR_TASKS + NR_PROCS + 10)
@@ -122,6 +125,18 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 enum	msgtype{
 	HARD_INT	= 1,				/* when hard interrupt occurs, a msg with type == HARD_INT will be sent to some tasks */
 	GET_TICKS,					/* value is 2 */
+	/* for drivers */
+	DEV_OPEN	= 998,
+	DEV_CLOSE,
+	DEV_READ,
+	DEV_WRITE,
+	DEV_IOCTL
 };
+
+
+/* Hard Drive */
+#define SECTOR_SIZE		512
+#define SECTOR_BITS		(SECTOR_SIZE * 8)
+#define SECTOR_SIZE_SHIFT	9
 
 #endif

@@ -147,10 +147,27 @@ hwint07:							;irq7的中断例程（打印机）
 
 ;==================================================================================================
 %macro	hwint_slave	1
+	call	save
+
+	in	al, INT_S_CTLMASK
+	or	al, (1 << (%1 -8))
+	out	INT_S_CTLMASK, al
+
+	mov	al, EOI						; 置master和slave的EOI位
+	out	INT_M_CTLMASK, al
+	nop
+	out	INT_S_CTLMASK, al
+
+	sti
 	push	%1
-	call	spurious_irq
-	add	esp, 4
-	hlt
+	call	[irq_table + %1 * 4]
+	pop	ecx
+
+	cli
+	in	al, INT_S_CTLMASK
+	and	al, ~(1 << (%1 - 8))
+	out	INT_S_CTLMASK, al
+	ret
 %endmacro
 ;==================================================================================================
 

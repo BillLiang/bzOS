@@ -112,7 +112,7 @@ PUBLIC int get_ticks(){
 =================================================================================================*/
 void TestA(){
 	while(TRUE){
-		printf("<%s:%d>", "ticks", get_ticks());
+		//printf("<%s:%d>", "ticks", get_ticks());
 		milli_delay(2000);
 	}
 }

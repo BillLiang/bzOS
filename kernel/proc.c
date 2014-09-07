@@ -1,7 +1,7 @@
 /**************************************************************************************************
  * @file			proc.c
  * @brief 
- * @author			BillLinag
+ * @author			Bill Liang
  * @date			2014-8-29
  *************************************************************************************************/
 #include "type.h"
@@ -380,6 +380,39 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m){
 
 
 /**************************************************************************************************
+ * 					inform_int
+ **************************************************************************************************
+ * <Ring 0> Inform a proc that an interrupt has occurred.
+ * 
+ * @param task_nr	The task which will be informed.	
+ *************************************************************************************************/
+PUBLIC void inform_int(int task_nr){
+	PROCESS* p = proc_table + task_nr;
+
+	if((p->flags & RECEIVING) && (p->recv_from == INTERRUPT || p->recv_from == ANY)){
+		p->p_msg->source	= INTERRUPT;
+		p->p_msg->type		= HARD_INT;
+		p->p_msg		= 0;
+		p->has_int_msg		= 0;
+		p->flags		&= ~RECEIVING;
+		p->recv_from		= NO_TASK;
+		
+		assert(p->flags == 0);
+		
+		unblock(p);
+
+		assert(p->p_msg == 0);
+		assert(p->recv_from == NO_TASK);
+		assert(p->send_to == NO_TASK);
+	}else{
+		p->has_int_msg		= 1;
+	}
+}
+
+
+
+
+/**************************************************************************************************
  * 					sys_sendrec
  **************************************************************************************************
  * <Ring 0> The core routine of system call 'sendrec'.
@@ -459,4 +492,72 @@ PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg){
 		break;
 	}
 	return ret;
+}
+
+
+
+
+/**************************************************************************************************
+ * 					dump_msg
+ *************************************************************************************************/
+PUBLIC void dump_msg(const char* title, MESSAGE* m){
+	int packed = FALSE;
+	printl("{%s}<0x%x>{%ssrc:%s(%d),%stype:%d,%s(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x)%s}%s",
+			title,
+			(int)m,
+			packed ? "" : "\n        ",
+			proc_table[m->source].name,
+			m->source,
+			packed ? "  " : "\n        ",
+			m->type,
+			packed ? "  " : "\n        ",
+			m->u.m3.m3i1,
+			m->u.m3.m3i2,
+			m->u.m3.m3i3,
+			m->u.m3.m3i4,
+			(int) m->u.m3.m3p1,
+			(int) m->u.m3.m3p2,
+			packed ? "" : "\n",
+			packed ? "" : "\n"
+			);
+}
+/**************************************************************************************************
+ * 					dump_proc
+ *************************************************************************************************/
+PUBLIC void dump_proc(PROCESS* p){
+	char info[STR_DEFAULT_LEN];
+	int i;
+	int text_color		= MAKE_COLOR(GREEN, RED);
+	
+	int dump_len		= sizeof(PROCESS);
+
+	out_byte(CRTC_ADDR_REG, START_ADDR_H);
+	out_byte(CRTC_DATA_REG, 0);
+	out_byte(CRTC_ADDR_REG, START_ADDR_L);
+	out_byte(CRTC_DATA_REG, 0);
+
+	vsprintf(info, "byte dump of proc_table[%d]:\n", p - proc_table);
+	disp_color_str(info, text_color);
+	for(i=0; i<dump_len; i++){
+		vsprintf(info, "%x.", ((unsigned char*)p)[i]);
+		disp_color_str(info, text_color);
+	}
+
+	disp_color_str("\n\n", text_color);
+	vsprintf(info, "ANY: 0x%x.\n", ANY);		disp_color_str(info, text_color);
+	vsprintf(info, "NO_TASK: 0x%x.\n", NO_TASK);	disp_color_str(info, text_color);
+	disp_color_str("\n", text_color);
+
+	vsprintf(info, "ldt_sel: 0x%x.  ", p->ldt_sel);		disp_color_str(info, text_color);
+	vsprintf(info, "ticks: 0x%x.  ", p->ticks);		disp_color_str(info, text_color);
+	vsprintf(info, "priority: 0x%x.  ", p->priority);	disp_color_str(info, text_color);
+	vsprintf(info, "pid: 0x%x.  ", p->pid);			disp_color_str(info, text_color);
+	vsprintf(info, "name: 0x%s.  ", p->name);		disp_color_str(info, text_color);
+	disp_color_str("\n", text_color);
+	vsprintf(info, "flags: 0x%x.  ", p->flags);		disp_color_str(info, text_color);
+	vsprintf(info, "recv_from: 0x%x.  ", p->recv_from);	disp_color_str(info, text_color);
+	vsprintf(info, "send_to: 0x%x.  ", p->send_to);		disp_color_str(info, text_color);
+	vsprintf(info, "nr_tty: 0x%x.  ", p->nr_tty);		disp_color_str(info, text_color);
+	disp_color_str("\n", text_color);
+	vsprintf(info, "has_int_msg: 0x%x.  ", p->has_int_msg);	disp_color_str(info, text_color);
 }
