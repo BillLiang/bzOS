@@ -4,6 +4,7 @@
 #include "type.h"
 #include "const.h"
 #include "protect.h"
+#include "fs.h"
 #include "console.h"
 #include "tty.h"
 #include "proc.h"

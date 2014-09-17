@@ -7,6 +7,7 @@
 #include "type.h"
 #include "const.h"
 #include "protect.h"
+#include "fs.h"
 #include "console.h"
 #include "tty.h"
 #include "proc.h"
@@ -214,7 +215,6 @@ PRIVATE int msg_send(PROCESS* current, int dest, MESSAGE* msg){
 			p_dest->q_sending = sender;
 		}
 		sender->next_sending = 0;
-
 		block(sender);
 
 		assert(sender->flags == SENDING);
@@ -388,7 +388,6 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m){
  *************************************************************************************************/
 PUBLIC void inform_int(int task_nr){
 	PROCESS* p = proc_table + task_nr;
-
 	if((p->flags & RECEIVING) && (p->recv_from == INTERRUPT || p->recv_from == ANY)){
 		p->p_msg->source	= INTERRUPT;
 		p->p_msg->type		= HARD_INT;
@@ -398,9 +397,9 @@ PUBLIC void inform_int(int task_nr){
 		p->recv_from		= NO_TASK;
 		
 		assert(p->flags == 0);
-		
 		unblock(p);
 
+		assert(p->flags == 0);
 		assert(p->p_msg == 0);
 		assert(p->recv_from == NO_TASK);
 		assert(p->send_to == NO_TASK);
@@ -502,7 +501,7 @@ PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg){
  *************************************************************************************************/
 PUBLIC void dump_msg(const char* title, MESSAGE* m){
 	int packed = FALSE;
-	printl("{%s}<0x%x>{%ssrc:%s(%d),%stype:%d,%s(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x)%s}%s",
+	printl("{%s}<%x>{%ssrc:%s(%d),%stype:%d,%s(%x, %x, %x, %x, %x, %x)%s}%s",
 			title,
 			(int)m,
 			packed ? "" : "\n        ",
@@ -544,20 +543,20 @@ PUBLIC void dump_proc(PROCESS* p){
 	}
 
 	disp_color_str("\n\n", text_color);
-	vsprintf(info, "ANY: 0x%x.\n", ANY);		disp_color_str(info, text_color);
-	vsprintf(info, "NO_TASK: 0x%x.\n", NO_TASK);	disp_color_str(info, text_color);
+	vsprintf(info, "ANY: %x.\n", ANY);		disp_color_str(info, text_color);
+	vsprintf(info, "NO_TASK: %x.\n", NO_TASK);	disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
 
-	vsprintf(info, "ldt_sel: 0x%x.  ", p->ldt_sel);		disp_color_str(info, text_color);
-	vsprintf(info, "ticks: 0x%x.  ", p->ticks);		disp_color_str(info, text_color);
-	vsprintf(info, "priority: 0x%x.  ", p->priority);	disp_color_str(info, text_color);
-	vsprintf(info, "pid: 0x%x.  ", p->pid);			disp_color_str(info, text_color);
-	vsprintf(info, "name: 0x%s.  ", p->name);		disp_color_str(info, text_color);
+	vsprintf(info, "ldt_sel: %x.  ", p->ldt_sel);		disp_color_str(info, text_color);
+	vsprintf(info, "ticks: %x.  ", p->ticks);		disp_color_str(info, text_color);
+	vsprintf(info, "priority: %x.  ", p->priority);		disp_color_str(info, text_color);
+	vsprintf(info, "pid: %x.  ", p->pid);			disp_color_str(info, text_color);
+	vsprintf(info, "name: %s.  ", p->name);			disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
-	vsprintf(info, "flags: 0x%x.  ", p->flags);		disp_color_str(info, text_color);
-	vsprintf(info, "recv_from: 0x%x.  ", p->recv_from);	disp_color_str(info, text_color);
-	vsprintf(info, "send_to: 0x%x.  ", p->send_to);		disp_color_str(info, text_color);
-	vsprintf(info, "nr_tty: 0x%x.  ", p->nr_tty);		disp_color_str(info, text_color);
+	vsprintf(info, "flags: %x.  ", p->flags);		disp_color_str(info, text_color);
+	vsprintf(info, "recv_from: %x.  ", p->recv_from);	disp_color_str(info, text_color);
+	vsprintf(info, "send_to: %x.  ", p->send_to);		disp_color_str(info, text_color);
+	vsprintf(info, "nr_tty: %x.  ", p->nr_tty);		disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
-	vsprintf(info, "has_int_msg: 0x%x.  ", p->has_int_msg);	disp_color_str(info, text_color);
+	vsprintf(info, "has_int_msg: %x.  ", p->has_int_msg);	disp_color_str(info, text_color);
 }

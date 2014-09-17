@@ -31,3 +31,5 @@ extern	system_call	sys_call_table[];
 
 extern	TTY		tty_table[];
 extern	CONSOLE		console_table[];
+
+extern	struct	dev_drv_map	dd_map[];

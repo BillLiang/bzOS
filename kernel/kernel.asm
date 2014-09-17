@@ -150,13 +150,13 @@ hwint07:							;irq7的中断例程（打印机）
 	call	save
 
 	in	al, INT_S_CTLMASK
-	or	al, (1 << (%1 -8))
+	or	al, (1 << (%1 - 8))
 	out	INT_S_CTLMASK, al
 
 	mov	al, EOI						; 置master和slave的EOI位
-	out	INT_M_CTLMASK, al
+	out	INT_M_CTL, al					; remember this, otherwise the hard disk will never respond to interrupt again.
 	nop
-	out	INT_S_CTLMASK, al
+	out	INT_S_CTL, al
 
 	sti
 	push	%1

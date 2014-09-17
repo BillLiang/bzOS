@@ -5,8 +5,10 @@
  * @date			2014-9-7
  *************************************************************************************************/
 #include "type.h"
+#include "config.h"
 #include "const.h"
 #include "protect.h"
+#include "fs.h"
 #include "console.h"
 #include "tty.h"
 #include "proc.h"
@@ -25,7 +27,11 @@ PUBLIC void task_fs(){
 
 	MESSAGE driver_msg;
 	driver_msg.type		= DEV_OPEN;
-	send_recv(SEND, TASK_HD, &driver_msg);
+	driver_msg.DEVICE	= MINOR(ROOT_DEV);
+
+	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
+
+	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 
 	spin("FS");
 }

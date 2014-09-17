@@ -1,7 +1,7 @@
 #ifndef _BZOS_CONST_H_
 #define	_BZOS_CONST_H_
 
-/* 断言 */
+/* assertion */
 #define	ASSERT
 #ifdef	ASSERT
 void assertion_failure(char* exp, char* file, char* base_file, int line);
@@ -11,20 +11,20 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define	assert(exp)
 #endif
 
-/* 函数类型 */
+/* function type */
 #define PUBLIC
 #define PRIVATE	static
 
 #define	STR_DEFAULT_LEN		1024
 
-/*除了在global.c中，EXTERN被定义为extern*/
+/* 除了在global.c中，EXTERN被定义为extern */
 #define	EXTERN	extern
 
 /* Boolean */
 #define	TRUE		1
 #define	FALSE		0
 
-/* 颜色 */
+/* Color */
 #define	BLACK		0x0
 #define	WHITE		0x7
 #define	RED		0x4
@@ -39,7 +39,7 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define	GDT_SIZE	128
 #define	IDT_SIZE	256
 
-/* 权限 */
+/* privilege */
 #define	PRIVILEGE_KRNL	0
 #define	PRIVILEGE_TASK	1
 #define	PRIVILEGE_USER	3
@@ -66,7 +66,7 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define	PRINTER_IRQ		7
 #define	AT_WINT_IRQ		14
 
-/* 系统调用 */
+/* System call */
 #define	NR_SYS_CALL		2
 
 /* 8253/8254 PIT (Programmable Interval Timer)可编程间隔计时器 */
@@ -76,7 +76,7 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define	TIMER_FREQ		1193182L		/* 计时器时钟频率 */
 #define	HZ			100			
 
-/* 键盘 */
+/* Keyboard */
 /* 8042键盘控制器端口 */
 #define KB_DATA			0x60			/* 数据缓冲区，读/写 */
 #define	KB_CMD			0x64			/* 读：状态	写：发送命令 */
@@ -108,11 +108,12 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define	RECEIVING		0x04			/* set when proc trying to receive message */
 
 /* system tasks */
+#define INVALID_DRIVER		-20
+#define INTERRUPT		-10
 #define TASK_TTY		0			/* TASK_XXX must be corresponding with global.c  */
 #define	TASK_SYS		1
 #define TASK_HD			2
 
-#define	INTERRUPT		-10
 #define	ANY			(NR_TASKS + NR_PROCS + 10)
 #define	NO_TASK			(NR_TASKS + NR_PROCS + 20)
 
@@ -122,6 +123,13 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define	BOTH			3			/* BOTH = (SEND | RECEIVE) */
 
 #define	RETVAL			u.m3.m3i1		/* return value */
+#define CNT			u.m3.m3i2
+#define REQUEST			u.m3.m3i2
+#define PROC_NR			u.m3.m3i3
+#define DEVICE			u.m3.m3i4
+#define POSITION		u.m3.m3l1
+#define BUF			u.m3.m3p2
+
 enum	msgtype{
 	HARD_INT	= 1,				/* when hard interrupt occurs, a msg with type == HARD_INT will be sent to some tasks */
 	GET_TICKS,					/* value is 2 */
@@ -134,9 +142,55 @@ enum	msgtype{
 };
 
 
+
+
 /* Hard Drive */
 #define SECTOR_SIZE		512
 #define SECTOR_BITS		(SECTOR_SIZE * 8)
 #define SECTOR_SIZE_SHIFT	9
+
+#define MAX_DRIVES		2
+#define NR_PART_PER_DRIVE	4
+#define NR_SUB_PER_PART		16
+#define NR_SUB_PER_DRIVE	(NR_PART_PER_DRIVE * NR_SUB_PER_PART)
+#define NR_PRIM_PER_DRIVE	(NR_PART_PER_DRIVE + 1)
+
+/**
+ * @def MAX_PRIM
+ * Defines the max minor number of the primary partitions.
+ * If there are 2 disks, prim_dev ranges in hd[0-9], this macro will
+ * equal 9.
+ */
+#define MAX_PRIM		(MAX_DRIVES * NR_PRIM_PER_DRIVE - 1)
+#define MAX_SUBPARTITIONS	(NR_SUB_PER_DRIVE * MAX_DRIVES)
+
+/* 硬盘设备号 */
+#define MINOR_hd1a		0x10
+#define MINOR_hd2a		(MINOR_hd1a + NR_SUB_PER_PART)
+
+#define P_PRIMARY		0
+#define P_EXTENDED		1
+
+#define BZOS_PART		0x99	/* bzOS partition */
+#define NO_PART			0x00	/* unused entry */
+#define EXT_PART		0x05	/* extended partition */
+
+/* major device numbers (corresponding to kernel/global.c::dd_map[]) */
+#define NO_DEV			0
+#define DEV_FLOPPY		1
+#define DEV_CDROM		2
+#define DEV_HD			3
+#define DEV_CHAR_TTY		4
+#define DEV_SCSI		5
+
+/* make device number from major and minor numbers */
+#define MAJOR_SHIFT		8
+#define MAKE_DEV(a,b)		((a << MAJOR_SHIFT) | b)
+
+#define ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT)
+
+/* separate major and minor numbers from device number */
+#define MAJOR(x)		((x >> MAJOR_SHIFT) & 0xff)
+#define MINOR(x)		(x & 0xff)
 
 #endif
