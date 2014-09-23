@@ -18,20 +18,20 @@ PUBLIC void cstart(){
 	
 	disp_str("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n--------\"cstart\" begins--------\n");
 
-	//将LOADER中的GDT复制到新的GDT中
-	memcpy(&gdt,
-		(void*) (*((u32*)(&gdt_ptr[2]))),	
-		*((u16*)(&gdt_ptr[0])) + 1);
+	/* 将LOADER中的GDT复制到新的GDT中 */
+	memcpy(&gdt,					/* New GDT */
+		(void*) (*((u32*)(&gdt_ptr[2]))),	/* Base of Old GDT */
+		*((u16*)(&gdt_ptr[0])) + 1);		/* Limit of Old GDT */
 
-	//把gdt_ptr中的内容换成新的GDT的基地址和界限
-	u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);
-	u32* p_gdt_base = (u32*)(&gdt_ptr[2]);
+	/* 把gdt_ptr中的内容换成新的GDT的基地址和界限 */
+	u16* p_gdt_limit = (u16*)(&gdt_ptr[0]);		/* 0~15: Limit */
+	u32* p_gdt_base = (u32*)(&gdt_ptr[2]);		/* 16~47: Base */
 	*p_gdt_limit = GDT_SIZE * sizeof(DESCRIPTOR) - 1;
 	*p_gdt_base = (u32)&gdt;
 
 	/*初始化IDT*/
-	u16* p_idt_limit = (u16*)(&idt_ptr[0]);
-	u32* p_idt_base = (u32*)(&idt_ptr[2]);
+	u16* p_idt_limit = (u16*)(&idt_ptr[0]);		/* 0~15: Limit */
+	u32* p_idt_base = (u32*)(&idt_ptr[2]);		/* 16~47: Base */
 	*p_idt_limit = IDT_SIZE * sizeof(GATE) - 1;
 	*p_idt_base = (u32)&idt;
 

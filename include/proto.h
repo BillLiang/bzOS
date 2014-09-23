@@ -76,6 +76,7 @@ PUBLIC	void	hd_handler(int irq);
 
 /* fs/main.c */
 PUBLIC	void	task_fs();
+PUBLIC	int	rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr, void* buf);
 
 /* printf.c */
 PUBLIC	int	printf(const char* fmt, ...);

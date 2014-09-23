@@ -24,6 +24,9 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define	TRUE		1
 #define	FALSE		0
 
+#define max(a,b)	((a) > (b) ? (a) : (b))
+#define min(a,b)	((a) < (b) ? (a) : (b))
+
 /* Color */
 #define	BLACK		0x0
 #define	WHITE		0x7
@@ -113,6 +116,7 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define TASK_TTY		0			/* TASK_XXX must be corresponding with global.c  */
 #define	TASK_SYS		1
 #define TASK_HD			2
+#define TASK_FS			3
 
 #define	ANY			(NR_TASKS + NR_PROCS + 10)
 #define	NO_TASK			(NR_TASKS + NR_PROCS + 20)
@@ -129,6 +133,8 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define DEVICE			u.m3.m3i4
 #define POSITION		u.m3.m3l1
 #define BUF			u.m3.m3p2
+
+#define DIOCTL_GET_GEO		1
 
 enum	msgtype{
 	HARD_INT	= 1,				/* when hard interrupt occurs, a msg with type == HARD_INT will be sent to some tasks */
@@ -192,5 +198,18 @@ enum	msgtype{
 /* separate major and minor numbers from device number */
 #define MAJOR(x)		((x >> MAJOR_SHIFT) & 0xff)
 #define MINOR(x)		(x & 0xff)
+
+#define INVALID_INODE		0
+#define ROOT_INODE		1
+
+/* INODE::i_mode (actually, lower 12 bits are reserved) */
+#define I_TYPE_MASK		0170000
+#define I_REGULAR		0100000
+#define I_BLOCK_SPECIAL		0060000
+#define I_DIRECTORY		0040000
+#define I_CHAR_SPECIAL		0020000
+#define I_NAMED_PIPE		0010000
+
+#define NR_DEFAULT_FILE_SECTS	2048	/* 2048 * 512 = 1MB */
 
 #endif
