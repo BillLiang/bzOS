@@ -190,7 +190,7 @@ PRIVATE void mkfs(){
 	for(i=0; i<NR_CONSOLES; i++){
 		pde ++;
 		pde->inode_nr	= i + 2;
-		vsprintf(pde->name, "dev_tty%d", i);
+		sprintf(pde->name, "dev_tty%d", i);	/* do not use 'vsprintf' */
 	}
 	WR_SECT(ROOT_DEV, sb.n_1st_sect);
 

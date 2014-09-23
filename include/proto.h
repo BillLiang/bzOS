@@ -80,6 +80,7 @@ PUBLIC	int	rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr, void
 
 /* printf.c */
 PUBLIC	int	printf(const char* fmt, ...);
+PUBLIC	int	sprintf(char* buf, const char* fmt, ...);
 
 /* lib/misc.c */
 PUBLIC	void	spin(char* func_name);

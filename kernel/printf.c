@@ -68,6 +68,8 @@ PUBLIC int vsprintf(char* buf, const char* fmt, va_list args){
 		}
 	}
 
+	*buf	= 0;
+
 	return (buf - p);
 }
 
@@ -82,4 +84,9 @@ PUBLIC int printf(const char* fmt, ...){
 	printx(buf);						/* system call 'sys_printx()' */
 
 	return i;
+}
+
+PUBLIC int sprintf(char* buf, const char* fmt, ...){
+	va_list arg = (va_list)((char*)&fmt + 4);
+	return vsprintf(buf, fmt, arg);
 }
