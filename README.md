@@ -1,6 +1,14 @@
 bzOS
 =========
 A simple operating system for fun, trying to build it.
+>
+- __Protected mode__
+- __Multi process & System call__
+- __Keyboard & TTY__
+- __Micro kernel (IPC)__
+- __File system__
+- __Memory management (coming soon)__
+
 Development Environment
 ---------
 <table>
