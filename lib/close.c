@@ -1,8 +1,8 @@
 /**************************************************************************************************
- * @file	systask.c
- * @brief
- * @author	BillLiang
- * @date	2014-9-5
+ * @file			close.c
+ * @brief 			
+ * @author			Bill Liang
+ * @date			2014-10-01
  *************************************************************************************************/
 
 #include "type.h"
@@ -16,25 +16,23 @@
 #include "string.h"
 #include "proto.h"
 #include "global.h"
+#include "hd.h"
 
 /**************************************************************************************************
- * 					task_sys
+ * 					close
  **************************************************************************************************
- * <Ring 1> The main loop off TASK SYS.
+ * Close a file descriptor.
+ *
+ * @param fd	File descriptor.
+ *
+ * @return	0 if successful, otherwise -1.
  *************************************************************************************************/
-PUBLIC void task_sys(){
-	MESSAGE msg;				/* for loading the msg sent */
-	while(TRUE){
-		send_recv(RECEIVE, ANY, &msg);	/* get the msg */
-		int src		= msg.source;
-		switch(msg.type){
-		case GET_TICKS:
-			msg.RETVAL = ticks;
-			send_recv(SEND, src, &msg);
-			break;
-		default:
-			panic("unknown msg type");
-			break;
-		}
-	}
+PUBLIC int close(int fd){
+	MESSAGE msg;
+	msg.type	= CLOSE;
+	msg.FD		= fd;
+
+	send_recv(BOTH, TASK_FS, &msg);
+
+	return msg.RETVAL;
 }

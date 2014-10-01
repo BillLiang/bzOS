@@ -2,6 +2,7 @@
 
 #include "type.h"
 #include "const.h"
+#include "stdio.h"
 #include "protect.h"
 #include "console.h"
 #include "tty.h"
@@ -10,10 +11,10 @@
 #include "global.h"
 #include "proto.h"
 
-/* irq处理例程 */
+/* irq handlers */
 PUBLIC	irq_handler	irq_table[NR_IRQ];
 
-/* 全局进程表 */
+/* Global process table */
 PUBLIC	PROCESS		proc_table[NR_TASKS + NR_PROCS];
 /* System tasks, running in ring1 */
 PUBLIC	TASK		task_table[NR_TASKS] = {{task_tty, STACK_SIZE_TTY, "TTY"},

@@ -1,24 +1,9 @@
 #ifndef _BZOS_CONST_H_
 #define	_BZOS_CONST_H_
 
-/* assertion */
-#define	ASSERT
-#ifdef	ASSERT
-void assertion_failure(char* exp, char* file, char* base_file, int line);
-#define assert(exp)	if(exp) ; \
-	else assertion_failure(#exp, __FILE__, __BASE_FILE__, __LINE__);
-#else
-#define	assert(exp)
-#endif
-
 /* function type */
 #define PUBLIC
 #define PRIVATE	static
-
-#define	STR_DEFAULT_LEN		1024
-
-/* 除了在global.c中，EXTERN被定义为extern */
-#define	EXTERN	extern
 
 /* Boolean */
 #define	TRUE		1
@@ -126,6 +111,11 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define	RECEIVE			2
 #define	BOTH			3			/* BOTH = (SEND | RECEIVE) */
 
+#define FD			u.m3.m3i1		/* File descriptor */
+#define PATHNAME		u.m3.m3p1
+#define FLAGS			u.m3.m3i1
+#define NAME_LEN		u.m3.m3i2
+
 #define	RETVAL			u.m3.m3i1		/* return value */
 #define CNT			u.m3.m3i2
 #define REQUEST			u.m3.m3i2
@@ -134,11 +124,18 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define POSITION		u.m3.m3l1
 #define BUF			u.m3.m3p2
 
+#define OFFSET			u.m3.m3i2
+#define WHENCE			u.m3.m3i3
+
 #define DIOCTL_GET_GEO		1
 
 enum	msgtype{
 	HARD_INT	= 1,				/* when hard interrupt occurs, a msg with type == HARD_INT will be sent to some tasks */
 	GET_TICKS,					/* value is 2 */
+	/* FS */
+	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, UNLINK,
+	/* TTY, SYS, FS, MM, etc */
+	SYSCALL_RET,
 	/* for drivers */
 	DEV_OPEN	= 998,
 	DEV_CLOSE,
@@ -211,5 +208,10 @@ enum	msgtype{
 #define I_NAMED_PIPE		0010000
 
 #define NR_DEFAULT_FILE_SECTS	2048	/* 2048 * 512 = 1MB */
+/* file manipulate scheme */
+#define NR_FILES		64	/* the maximun num of files opened by one process. */
+#define NR_FILE_DESC		64
+#define NR_INODE		64
+#define NR_SUPER_BLOCK		8
 
 #endif

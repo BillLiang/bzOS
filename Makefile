@@ -13,9 +13,9 @@ CC		= gcc
 
 DASMFLAGS	= -u -o $(ENTRYPOINT) -e $(ENTRYOFFSET)
 ASMBFLAGS	= -I boot/include/
-ASMKFLAGS	= -I include/ -f elf
+ASMKFLAGS	= -I include/ -I include/sys/ -f elf
 LDFLAGS		= -s -Ttext $(ENTRYPOINT)
-CFLAGS		= -I include/ -c -fno-builtin -fno-stack-protector
+CFLAGS		= -I include/ -I include/sys/ -c -fno-builtin -fno-stack-protector
 
 # 文件
 BOOTINCLUDE	= boot/include/fat12hdr.inc boot/include/load.inc boot/include/pm.inc
@@ -23,8 +23,8 @@ OBJS		= kernel/kernel.o kernel/start.o kernel/i8259.o kernel/protect.o \
 		  kernel/global.o kernel/main.o kernel/clock.o kernel/proc.o kernel/syscall.o \
 		  kernel/keyboard.o kernel/tty.o kernel/console.o kernel/printf.o kernel/systask.o \
 		  kernel/hd.o \
-		  fs/main.o \
-		  lib/klib.o lib/kliba.o lib/string.o lib/misc.o
+		  fs/main.o  fs/misc.o fs/open.o \
+		  lib/klib.o lib/kliba.o lib/string.o lib/misc.o lib/open.o lib/close.o
 
 BZOSBOOT	= boot/boot.bin boot/loader.bin
 BZOSKERNEL	= kernel/kernel.bin
@@ -69,7 +69,7 @@ boot/loader.bin: boot/loader.asm $(BOOTINCLUDE)
 $(BZOSKERNEL): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)
 
-kernel/kernel.o: kernel/kernel.asm include/sconst.inc
+kernel/kernel.o: kernel/kernel.asm
 	$(ASM) $(ASMKFLAGS) -o $@ $<
 
 kernel/start.o: kernel/start.c
@@ -117,6 +117,12 @@ kernel/hd.o: kernel/hd.c
 fs/main.o: fs/main.c
 	$(CC) $(CFLAGS) -o $@ $<
 
+fs/misc.o: fs/misc.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+fs/open.o: fs/open.c
+	$(CC) $(CFLAGS) -o $@ $<
+
 lib/klib.o: lib/klib.c
 	$(CC) $(CFLAGS) -o $@ $<	
 
@@ -127,5 +133,11 @@ lib/string.o: lib/string.asm
 	$(ASM) $(ASMKFLAGS) -o $@ $<
 
 lib/misc.o: lib/misc.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+lib/open.o: lib/open.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+lib/close.o: lib/close.c
 	$(CC) $(CFLAGS) -o $@ $<
 

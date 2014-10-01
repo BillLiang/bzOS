@@ -15,8 +15,8 @@
  * |		Data		  |	// Store data.
  * |				  |	
  * |				  |	
- * |------------------------------|
- * |		Root		  |	// It's similar with FAT12.
+ * |	--------------------	  |
+ * |	Root(belogs to data)	  |	// It's similar with FAT12.
  * |------------------------------|
  * |				  |
  * |	     inode_array	  |	// Store all inodes data struct, every one maintains information about
@@ -134,6 +134,16 @@ struct dir_entry {
  * It is as same as the size in memory.
  */
 #define DIR_ENTRY_SIZE		sizeof(struct dir_entry)
+
+/**
+ * @bref	File Descriptor
+ */
+struct file_desc{
+	int		fd_mode;	/* R or W */
+	int		fd_pos;		/* Current position for R/W */
+	struct inode*	fd_inode;	/* Pointer to the i-node. */
+};
+
 
 /**
  * Since all invocations of 'rw_sector()' in FS look similar

@@ -52,6 +52,8 @@ typedef struct s_proc{
 						 * e.g. A,B,C are sending message to this proc, then this.q_sending points to
 						 * A, A.next_sending points to B, B.next_sending points to C.
 						 */
+
+	struct file_desc* filp[NR_FILES];	/* A set of pointers to file_desc_table */
 }PROCESS;
 
 typedef struct s_task{				/* task, for process initialization */

@@ -7,6 +7,7 @@
 
 #include "type.h"
 #include "const.h"
+#include "stdio.h"
 #include "protect.h"
 #include "fs.h"
 #include "console.h"

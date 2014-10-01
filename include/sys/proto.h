@@ -78,6 +78,15 @@ PUBLIC	void	hd_handler(int irq);
 PUBLIC	void	task_fs();
 PUBLIC	int	rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr, void* buf);
 
+PUBLIC	struct super_block* get_super_block(int dev);
+PUBLIC	struct inode* get_inode(int dev, int num);
+PUBLIC	void put_inode(struct inode* pinode);
+PUBLIC	void sync_inode(struct inode* p);
+
+/* fs/misc.c */
+PUBLIC	int	strip_path(char* filename, const char* pathname, struct inode** ppinode);
+PUBLIC	int	search_file(char* path);
+
 /* printf.c */
 PUBLIC	int	printf(const char* fmt, ...);
 PUBLIC	int	sprintf(char* buf, const char* fmt, ...);
