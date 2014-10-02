@@ -119,7 +119,7 @@ PUBLIC int get_ticks(){
 =================================================================================================*/
 void TestA(){
 	int fd;
-	int n;
+	int i, n;
 	const char filename[]	= "name";
 	const char bufw[]	= "liangbizhi";
 	const int rd_bytes	= 5;
@@ -152,6 +152,27 @@ void TestA(){
 
 	/* close */
 	close(fd);
+
+	char* filenames[] = {"/foo", "/bar", "/baz"};
+
+	/* create files */
+	for(i=0; i<sizeof(filenames) / sizeof(filenames[0]); i++){
+		fd = open(filenames[i], O_CREAT | O_RDWR);
+		assert(fd != -1);
+		printf("File created: %s (fd %d)\n", filenames[i], fd);
+		close(fd);
+	}
+
+	char* rfilenames[] = {"/bar", "/foo", "/baz", "/dev_tty0"};
+
+	/* remove files */
+	for(i=0; i<sizeof(rfilenames) / sizeof(rfilenames[0]); i++){
+		if(unlink(rfilenames[i]) == 0){
+			printf("File removed: %s\n", rfilenames[i]);
+		}else{
+			printf("Failed to remove file: %s\n", rfilenames[i]);
+		}
+	}
 
 	spin("TestA");
 }

@@ -37,7 +37,7 @@ PUBLIC void task_fs(){
 		pcaller	= &proc_table[src];
 
 		switch(fs_msg.type){
-		case OPEN:
+			case OPEN:
 			fs_msg.FD	= do_open();
 			break;
 		case CLOSE:
@@ -46,6 +46,9 @@ PUBLIC void task_fs(){
 		case READ:
 		case WRITE:
 			fs_msg.CNT	= do_rdwt();
+			break;
+		case UNLINK:
+			fs_msg.RETVAL	= do_unlink();
 			break;
 		default:
 			dump_msg("FS::unkown message:", &fs_msg);

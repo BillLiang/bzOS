@@ -83,6 +83,14 @@ PUBLIC	struct inode* get_inode(int dev, int num);
 PUBLIC	void put_inode(struct inode* pinode);
 PUBLIC	void sync_inode(struct inode* p);
 
+/* fs/open.c */
+PUBLIC	int	do_open();
+PUBLIC	int	do_close();
+/* fs/read_write.c */
+PUBLIC	int	do_rdwt();
+/* fs/link.c */
+PUBLIC	int	do_unlink();
+
 /* fs/misc.c */
 PUBLIC	int	strip_path(char* filename, const char* pathname, struct inode** ppinode);
 PUBLIC	int	search_file(char* path);
