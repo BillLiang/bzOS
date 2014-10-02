@@ -43,6 +43,10 @@ PUBLIC void task_fs(){
 		case CLOSE:
 			fs_msg.RETVAL	= do_close();
 			break;
+		case READ:
+		case WRITE:
+			fs_msg.CNT	= do_rdwt();
+			break;
 		default:
 			dump_msg("FS::unkown message:", &fs_msg);
 			assert(0);
