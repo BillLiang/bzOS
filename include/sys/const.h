@@ -134,6 +134,8 @@ enum	msgtype{
 	GET_TICKS,					/* value is 2 */
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, UNLINK,
+	/* FS & TTY */
+	SUSPEND_PROC, RESUME_PROC,
 	/* TTY, SYS, FS, MM, etc */
 	SYSCALL_RET,
 	/* for drivers */

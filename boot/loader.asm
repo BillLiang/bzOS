@@ -153,13 +153,13 @@ LABEL_GOON_LOADING_FILE:
 	add	bx, [BPB_BytesPerSec]
 	jc	.1				;当bx重新变为0时，说明内核大于64KB，一个扇区512B，bx最多可计算128个，即512B*128 = 64KB
 	jmp	.2
-.1
+.1:
 	push	ax
 	mov	ax, es
 	add	ax, 1000h			;es += 0x1000 <- es指向下一个段
 	mov	es, ax
 	pop	ax
-.2
+.2:
 	jmp	LABEL_GOON_LOADING_FILE
 LABEL_FILE_LOADED:
 	call	KillMotor

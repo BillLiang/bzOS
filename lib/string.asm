@@ -69,7 +69,7 @@ memset:
 	inc	edi
 	dec	ecx
 	jmp	.1
-.2
+.2:
 	pop	ecx
 	pop	edi
 	pop	esi

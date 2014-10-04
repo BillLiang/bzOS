@@ -34,8 +34,6 @@ typedef struct s_proc{
 	u32		pid;
 	char		name[32];		/* name of the process */
 
-	int		nr_tty;			/* the specified TTY for this process */
-
 	int		flags;			/* process flags. A proc is runnable if flags == 0 
 						 * flags == SENDING, the proc is sending a message.
 						 * flags == RECEIVING, the proc is receiving a message.

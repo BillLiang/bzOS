@@ -558,7 +558,6 @@ PUBLIC void dump_proc(PROCESS* p){
 	vsprintf(info, "flags: %x.  ", p->flags);		disp_color_str(info, text_color);
 	vsprintf(info, "recv_from: %x.  ", p->recv_from);	disp_color_str(info, text_color);
 	vsprintf(info, "send_to: %x.  ", p->send_to);		disp_color_str(info, text_color);
-	vsprintf(info, "nr_tty: %x.  ", p->nr_tty);		disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
 	vsprintf(info, "has_int_msg: %x.  ", p->has_int_msg);	disp_color_str(info, text_color);
 }

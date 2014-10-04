@@ -70,8 +70,6 @@ PUBLIC int kernel_main(){
 		p_proc->regs.esp = (u32) p_task_stack;					/* esp指向新的栈底 */
 		p_proc->regs.eflags = eflags;
 
-		p_proc->nr_tty = 0;							/* 默认TTY为0 */
-
 		p_proc->flags		= 0;						/* this proc is runnable */
 		p_proc->p_msg		= 0;						/* null message */
 		p_proc->recv_from	= NO_TASK;
@@ -87,16 +85,12 @@ PUBLIC int kernel_main(){
 		p_task ++;
 		selector_ldt += (1 << 3);
 	}
-	proc_table[NR_TASKS + 0].nr_tty = 0;
-	proc_table[NR_TASKS + 1].nr_tty = 1;
-	proc_table[NR_TASKS + 2].nr_tty = 1;
 
 	ticks = 0;
 	k_reenter = 0;									/* 用于判断中断嵌套时中断是否重入 */
 	p_proc_ready = proc_table;
 
 	init_clock();
-	init_keyboard();
 
 	restart();
 
@@ -177,19 +171,46 @@ void TestA(){
 	spin("TestA");
 }
 
-/*=================================================================================================
-  					一个进程体
-=================================================================================================*/
+/**************************************************************************************************
+ * 					TestB
+ **************************************************************************************************
+ * <Ring 3> A user process.
+ *************************************************************************************************/
 void TestB(){
+	char tty_name[] = "/dev_tty1";
+
+	int fd_stdin	= open(tty_name, O_RDWR);
+	assert(fd_stdin == 0);
+	int fd_stdout	= open(tty_name, O_RDWR);
+	assert(fd_stdout == 1);
+
+	char rdbuf[128];
+
 	while(TRUE){
-		printf("B");
-		milli_delay(2000);
+		write(fd_stdout, "$ ", 2);
+		int r = read(fd_stdin, rdbuf, 70);
+		rdbuf[r] = 0;
+
+		if(strcmp(rdbuf, "hello") == 0){
+			write(fd_stdout, "hello world!\n", 13);
+		}else{
+			if(rdbuf[0]){
+				write(fd_stdout, "{", 1);
+				write(fd_stdout, rdbuf, r);
+				write(fd_stdout, "}\n", 2);
+			}
+		}
 	}
+
+	assert(0);	/* never happend */
 }
-/*=================================================================================================
-  					一个进程体
-=================================================================================================*/
+/**************************************************************************************************
+ * 					TestC
+ **************************************************************************************************
+ * <Ring 3> A user process.
+ *************************************************************************************************/
 void TestC(){
+	spin("TestC");
 	while(TRUE){
 		printf("C");
 		milli_delay(2000);

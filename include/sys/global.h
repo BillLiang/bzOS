@@ -1,16 +1,18 @@
-/*除了在global.c 中，EXTERN被定义为extern*/
+/* EXTERN is defined as extern except in global.c */
 #ifdef	GLOBAL_VARIABLES_HERE
 #undef	EXTERN
 #define	EXTERN
 #endif
 
 EXTERN	int		disp_pos;
-EXTERN	u8		gdt_ptr[6];				//0-15: Limit	16-47: Base
-EXTERN	DESCRIPTOR	gdt[GDT_SIZE];				//新的GDT表，大小GDT_SIZE
-EXTERN	u8		idt_ptr[6];				//0-15: Limit	16-47: Base
-EXTERN	GATE		idt[IDT_SIZE];				//新的GDT表，大小GDT_SIZE
+EXTERN	u8		gdt_ptr[6];		/* 0-15: Limit	16-47: Base */
+EXTERN	DESCRIPTOR	gdt[GDT_SIZE];		/* 新的GDT表，大小GDT_SIZE */
+EXTERN	u8		idt_ptr[6];		/* 0-15: Limit	16-47: Base */
+EXTERN	GATE		idt[IDT_SIZE];		/* IDT表，大小IDT_SIZE */
 
 EXTERN	u32		k_reenter;
+
+EXTERN	int		key_pressed;		/* used for clock_handler to wake up TASK_TTY when a key is pressed */
 
 EXTERN	TSS		tss;
 EXTERN	PROCESS*	p_proc_ready;
