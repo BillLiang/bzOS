@@ -183,7 +183,9 @@ PRIVATE void tty_dev_write(TTY* tty){
  **************************************************************************************************
  * Invoked when task TTY received DEV_READ message.
  *
- * @note	The routine will return immediately after setting  
+ * @note	The routine will return immediately after setting some members of TTY struct,
+ * 		telling FS to suspend the proc who wants to read. The real transfer
+ * 		(tty buffer -> proc buffer) is not done here.
  *
  * @param tty	To which TTY the key is put.
  * @param msg	The MESSAGE just received.

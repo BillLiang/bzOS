@@ -77,20 +77,49 @@ PUBLIC int vsprintf(char* buf, const char* fmt, va_list args){
 
 	return (buf - p);
 }
-
+/**************************************************************************************************
+ * 					printf
+ **************************************************************************************************
+ * The most famous one.
+ *
+ * @param fmt	The format string.
+ *
+ * @return	The number of chars printed.
+ *************************************************************************************************/
 PUBLIC int printf(const char* fmt, ...){
 	int	i;
-	char	buf[256];
+	char	buf[STR_DEFAULT_LEN];
+	va_list arg = (va_list) ((char*)(&fmt) + 4);	/* 参数 */
 
-	va_list arg = (va_list) ((char*)(&fmt) + 4);		/* 参数 */
 	i = vsprintf(buf, fmt, arg);
-	buf[i] = 0;
+	int c = write(1, buf, i);			/* file descriptor is 1 */
 
-	printx(buf);						/* system call 'sys_printx()' */
+	assert(c == i);
 
 	return i;
 }
+/**************************************************************************************************
+ * 					printl
+ **************************************************************************************************
+ * Low level print
+ *
+ * @param fmt	The format string.
+ *
+ * @return	The number of chars printed.
+ *************************************************************************************************/
+PUBLIC int printl(const char* fmt, ...){
+	int i;
+	char buf[STR_DEFAULT_LEN];
+	va_list arg = (va_list) ((char*)(&fmt) + 4);
 
+	i = vsprintf(buf, fmt, arg);
+	printx(buf);
+
+	return i;
+}
+/**************************************************************************************************
+ * 					sprintf
+ *************************************************************************************************/
 PUBLIC int sprintf(char* buf, const char* fmt, ...){
 	va_list arg = (va_list)((char*)&fmt + 4);
 	return vsprintf(buf, fmt, arg);

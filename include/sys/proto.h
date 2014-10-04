@@ -97,8 +97,8 @@ PUBLIC	int	search_file(char* path);
 
 /* printf.c */
 PUBLIC	int	printf(const char* fmt, ...);
+PUBLIC	int	printl(const char* fmt, ...);
 PUBLIC	int	sprintf(char* buf, const char* fmt, ...);
 
 /* lib/misc.c */
 PUBLIC	void	spin(char* func_name);
-#define	printl	printf

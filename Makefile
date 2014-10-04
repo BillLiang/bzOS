@@ -21,9 +21,10 @@ CFLAGS		= -I include/ -I include/sys/ -c -fno-builtin -fno-stack-protector
 BOOTINCLUDE	= boot/include/fat12hdr.inc boot/include/load.inc boot/include/pm.inc
 OBJS		= kernel/kernel.o kernel/start.o kernel/i8259.o kernel/protect.o \
 		  kernel/global.o kernel/main.o kernel/clock.o kernel/proc.o kernel/syscall.o \
-		  kernel/keyboard.o kernel/tty.o kernel/console.o kernel/printf.o kernel/systask.o \
+		  kernel/keyboard.o kernel/tty.o kernel/console.o kernel/systask.o \
 		  kernel/hd.o \
 		  fs/main.o  fs/misc.o fs/open.o fs/read_write.o fs/link.o \
+		  lib/printf.o \
 		  lib/klib.o lib/kliba.o lib/string.o lib/misc.o \
 		  lib/open.o lib/close.o lib/read.o lib/write.o lib/unlink.o
 
@@ -106,9 +107,6 @@ kernel/tty.o: kernel/tty.c
 kernel/console.o: kernel/console.c
 	$(CC) $(CFLAGS) -o $@ $<
 
-kernel/printf.o: kernel/printf.c
-	$(CC) $(CFLAGS) -o $@ $<
-
 kernel/systask.o: kernel/systask.c
 	$(CC) $(CFLAGS) -o $@ $<
 
@@ -128,6 +126,9 @@ fs/read_write.o: fs/read_write.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 fs/link.o: fs/link.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+lib/printf.o: lib/printf.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 lib/klib.o: lib/klib.c
