@@ -1,45 +1,33 @@
 /**************************************************************************************************
- * @file	systask.c
- * @brief
- * @author	BillLiang
- * @date	2014-9-5
+ * @file			getpid.c
+ * @brief 			
+ * @author			Bill Liang
+ * @date			2014-10-6
  *************************************************************************************************/
-
 #include "type.h"
 #include "const.h"
 #include "stdio.h"
 #include "protect.h"
+#include "string.h"
 #include "fs.h"
+#include "proc.h"
 #include "console.h"
 #include "tty.h"
-#include "proc.h"
-#include "string.h"
-#include "proto.h"
 #include "global.h"
-
+#include "proto.h"
 /**************************************************************************************************
- * 					task_sys
+ * 					getpid
  **************************************************************************************************
- * <Ring 1> The main loop off TASK SYS.
+ * Get the PID.
+ *
+ * @return	The PID.
  *************************************************************************************************/
-PUBLIC void task_sys(){
-	MESSAGE msg;				/* for loading the msg sent */
-	while(TRUE){
-		send_recv(RECEIVE, ANY, &msg);	/* get the msg */
-		int src		= msg.source;
-		switch(msg.type){
-		case GET_TICKS:
-			msg.RETVAL = ticks;
-			send_recv(SEND, src, &msg);
-			break;
-		case GET_PID:
-			msg.type = SYSCALL_RET;
-			msg.PID = src;
-			send_recv(SEND, src, &msg);
-			break;
-		default:
-			panic("unknown msg type");
-			break;
-		}
-	}
+PUBLIC int getpid(){
+	MESSAGE msg;
+	msg.type = GET_PID;
+
+	send_recv(BOTH, TASK_SYS, &msg);
+	assert(msg.type == SYSCALL_RET);
+
+	return msg.PID;
 }

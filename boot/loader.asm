@@ -355,11 +355,16 @@ LABEL_PM_START:
 	call	DispMemInfo
 	call	SetupPaging
 
-	;mov	ah, 0fh
-	;mov	al, 'P'
-	;mov	[gs : ((80 * 0 + 39) * 2)], ax
-
-	call	InitKernel				;加载ELF文件中的内核代码到内存	
+	call	InitKernel				;加载ELF文件中的内核代码到内存
+	
+	; fill in BootParam[]
+	mov	dword [BOOT_PARAM_ADDR], BOOT_PARAM_MAGIC	; put magic number in it first.
+	mov	eax, [dwMemSize]
+	mov	[BOOT_PARAM_ADDR + 4], eax			; memory size
+	mov	eax, BaseOfKernelFile
+	shl	eax, 4
+	add	eax, OffsetOfKernelFile
+	mov	[BOOT_PARAM_ADDR + 8], eax			; phy-addr of kernel.bin
 	
 	;!!!正式进入内核了!!!
 	jmp	SelectorFlatC : KernelEntryPointPhyAddr

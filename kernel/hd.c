@@ -81,7 +81,7 @@ PUBLIC void init_hd(){
 	int i;
 	/* Get the number of drives form the BIOS data area. */
 	u8* pNrDrives		= (u8*) 0x475;
-	printl("NrDrives:%d.\n", *pNrDrives);
+	printl("{HD} NrDrives:%d.\n", *pNrDrives);
 	assert(*pNrDrives);
 
 	put_irq_handler(AT_WINT_IRQ, hd_handler);
@@ -302,7 +302,7 @@ PRIVATE void print_hdinfo(struct hd_info* hdi){
 		//if(hdi->primary[i].size == 0){
 		//	continue;
 		//}
-		printl("%sPART_%d: base %d(%x), size %d(%x) (in sector)\n",
+		printl("{HD} %sPART_%d: base %d(%x), size %d(%x) (in sector)\n",
 				i == 0 ? " " : "    ",
 				i,
 				hdi->primary[i].base,
@@ -314,7 +314,7 @@ PRIVATE void print_hdinfo(struct hd_info* hdi){
 		if(hdi->logical[i].size == 0){
 			continue;
 		}
-		printl("        %d: base %d(%x), size %d(%x) (in sector)\n",
+		printl("{HD}         %d: base %d(%x), size %d(%x) (in sector)\n",
 				i,
 				hdi->logical[i].base,
 				hdi->logical[i].base,
@@ -409,17 +409,17 @@ PRIVATE void print_identify_info(u16* hdinfo){
 			s[i * 2] = *p ++;
 		}
 		s[i * 2] = 0;
-		printl("%s: %s\n", iinfo[k].desc, s);
+		printl("{HD} %s: %s\n", iinfo[k].desc, s);
 	}
 
 	int capablities		= hdinfo[49];
-	printl("LBA supported: %s\n", (capablities & 0x0200) ? "Yes" : "No");
+	printl("{HD} LBA supported: %s\n", (capablities & 0x0200) ? "Yes" : "No");
 
 	int cmd_set_supported	= hdinfo[83];
-	printl("LBA48 supported: %s\n", (cmd_set_supported & 0x0400) ? "Yes" : "No");
+	printl("{HD} LBA48 supported: %s\n", (cmd_set_supported & 0x0400) ? "Yes" : "No");
 
 	int sectors		= ((int)hdinfo[61] << 16) + hdinfo[60];
-	printl("HD Size: %dMB\n", sectors * 512 / 1000000);
+	printl("{HD} HD Size: %dMB\n", sectors * 512 / 1000000);
 }
 /**************************************************************************************************
  * 					waitfor

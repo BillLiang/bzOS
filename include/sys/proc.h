@@ -1,6 +1,9 @@
-/*=================================================================================================
-  				proc.h		Bill Liang	2014-8-26
-=================================================================================================*/
+/**************************************************************************************************
+ * @file			proc.h
+ * @brief 			
+ * @author			Bill Liang
+ * @date			2014-8-26
+ *************************************************************************************************/
 typedef struct s_stackframe{
 	u32	gs;		/*					*/
 	u32	fs;		/*					*/
@@ -31,7 +34,7 @@ typedef struct s_proc{
 	int		ticks;			/* remained ticks */
 	int		priority;
 
-	u32		pid;
+//	u32		pid;
 	char		name[32];		/* name of the process */
 
 	int		flags;			/* process flags. A proc is runnable if flags == 0 
@@ -52,6 +55,9 @@ typedef struct s_proc{
 						 */
 
 	struct file_desc* filp[NR_FILES];	/* A set of pointers to file_desc_table */
+
+	int		parent;			/* pid of parent process */
+	int		exit_status;		/* for parent */
 }PROCESS;
 
 typedef struct s_task{				/* task, for process initialization */
@@ -62,23 +68,44 @@ typedef struct s_task{				/* task, for process initialization */
 
 #define	proc2pid(x)	(x - proc_table)
 
-/* 任务&进程的数量 */
-#define	NR_TASKS	4
-#define	NR_PROCS	3
+/* Number of tasks & processes */
+#define	NR_TASKS	5
+#define	NR_NATIVE_PROCS	4
+#define NR_PROCS	32
 
-/* 任务的栈 */
-#define	STACK_SIZE_TESTA	0x8000
-#define	STACK_SIZE_TESTB	0x8000
-#define	STACK_SIZE_TESTC	0x8000
-#define	STACK_SIZE_TTY		0x8000
-#define	STACK_SIZE_SYS		0x8000
-#define	STACK_SIZE_HD		0x8000
-#define	STACK_SIZE_FS		0x8000
+/**
+ * All forked proc will use memory above PROCS_BASE.
+ *
+ * @attention	Make sure PROCS_BASE is higher than any buffers,
+ * 		such as fsbuf, mmbuf, etc.
+ *
+ * @see global.c
+ * @see global.h
+ */
+#define PROCS_BASE		0xa00000	/* 10MB */
+#define PROC_IMAGE_SIZE_DEFAULT	0x100000	/* 1MB */
+#define PROC_ORIGIN_STACK	0x400		/* 1KB */
 
-#define	STACK_SIZE_TOTAL	STACK_SIZE_TESTA + \
+/* task stack */
+#define STACK_SIZE_DEFAULT	0x4000	/* 16KB */
+
+#define STACK_SIZE_INIT		STACK_SIZE_DEFAULT
+#define	STACK_SIZE_TESTA	STACK_SIZE_DEFAULT
+#define	STACK_SIZE_TESTB	STACK_SIZE_DEFAULT
+#define	STACK_SIZE_TESTC	STACK_SIZE_DEFAULT
+
+#define	STACK_SIZE_TTY		STACK_SIZE_DEFAULT
+#define	STACK_SIZE_SYS		STACK_SIZE_DEFAULT
+#define	STACK_SIZE_HD		STACK_SIZE_DEFAULT
+#define	STACK_SIZE_FS		STACK_SIZE_DEFAULT
+#define	STACK_SIZE_MM		STACK_SIZE_DEFAULT
+
+#define	STACK_SIZE_TOTAL	(STACK_SIZE_INIT + \
+				STACK_SIZE_TESTA + \
 				STACK_SIZE_TESTB + \
 				STACK_SIZE_TESTC + \
 				STACK_SIZE_TTY + \
 				STACK_SIZE_SYS + \
 				STACK_SIZE_HD + \
-				STACK_SIZE_FS
+				STACK_SIZE_FS + \
+				STACK_SIZE_MM)

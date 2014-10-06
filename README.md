@@ -7,7 +7,7 @@ A simple operating system for fun, trying to build it.
 - __Keyboard & TTY__
 - __Micro kernel (IPC)__
 - __File system__
-- __Memory management (coming soon)__
+- __Memory management (in coming)__
 
 Development Environment
 ---------

@@ -17,23 +17,29 @@
 #include "proto.h"
 #include "global.h"
 
+/**************************************************************************************************
+ * 					kernel_main
+ **************************************************************************************************
+ * jump from kernel.asm::_start.
+ *************************************************************************************************/
 PUBLIC int kernel_main(){
 	disp_str("--------\"kernel_main\" begins--------\n");
 
 	PROCESS*	p_proc		= proc_table;
-	TASK*		p_task		= task_table;
+	TASK*		p_task;
 	char*		p_task_stack	= task_stack + STACK_SIZE_TOTAL;
-	u16		selector_ldt	= SELECTOR_LDT_FIRST;
 	
-	int 		i;
+	int 		i, j, eflags, prio;
 
 	u8		privilege;
 	u8		rpl;
-	int		eflags;
-
-	int		prio;						/* priority */
 	/* initialize the proc table */
-	for(i=0; i<NR_TASKS + NR_PROCS; i++){
+	for(i=0; i<NR_TASKS + NR_PROCS; i++, p_proc++, p_task++){
+		if(i >= NR_TASKS + NR_NATIVE_PROCS){
+			p_proc->flags = FREE_SLOT;
+			continue;
+
+		}
 		if(i < NR_TASKS){					/* TASKS, running in Ring1 */
 			p_task		= task_table + i;
 			privilege	= PRIVILEGE_TASK;
@@ -49,29 +55,48 @@ PUBLIC int kernel_main(){
 		}
 
 		strcpy(p_proc->name, p_task->name);
-		p_proc->pid = i;
+		p_proc->parent	= NO_TASK;
 
-		p_proc->ldt_sel = selector_ldt;						/* 当前进程的LDT在GDT中选择子 */
-		/* 这里简单地把GDT的代码段描述符复制到LDT的第一个描述符中,然后下一句改变了该LDT描述符的DPL */
-		memcpy(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
-		p_proc->ldts[0].attr1 = DA_C | privilege << 5;
-		/* 这里简单地把GDT的数据段描述符复制到LDT的第二个描述符中,然后下一句改变了该LDT描述符的DPL */
-		memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
-		p_proc->ldts[1].attr1 = DA_DRW | privilege << 5;
+		/* base, limit & attribute */
+		if(strcmp(p_task->name, "INIT") != 0){
+			p_proc->ldts[INDEX_LDT_C]	= gdt[SELECTOR_KERNEL_CS >> 3];
+			p_proc->ldts[INDEX_LDT_RW]	= gdt[SELECTOR_KERNEL_DS >> 3];
+			/* change the DPLs */
+			p_proc->ldts[INDEX_LDT_C].attr1	= DA_C | privilege << 5;
+			p_proc->ldts[INDEX_LDT_RW].attr1= DA_DRW | privilege << 5;
+		}else{	/* it is INIT process! */
+			u32 k_base;
+			u32 k_limit;
+			int ret = get_kernel_map(&k_base, &k_limit);
+			assert(ret == 0);
 
-		p_proc->regs.cs = (0 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;		/* cs为指向LDT第一个描述符的选择子 */
-		p_proc->regs.ds = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;		/* ds为指向LDT第二个描述符的选择子 */
-		p_proc->regs.es = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;		/* es为指向LDT第二个描述符的选择子 */
-		p_proc->regs.fs = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;		/* fs为指向LDT第二个描述符的选择子 */
-		p_proc->regs.ss = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;		/* ss为指向LDT第二个描述符的选择子 */
-		p_proc->regs.gs = (SELECTOR_KERNEL_GS & SA_RPL_MASK) | rpl;		/* gs仍然指向显存，只是改变了DPL让其在低特权级下运行 */
+			init_descriptor(&p_proc->ldts[INDEX_LDT_C],
+					0, /* bytes before the entry point are useless for
+					    * the INIT process, doesn't matter.
+					    */
+					(k_base + k_limit) >> LIMIT_4K_SHIFT,
+					DA_32 | DA_LIMIT_4K | DA_C | privilege << 5);
+			init_descriptor(&p_proc->ldts[INDEX_LDT_RW],
+					0, /* bytes before the entry point are useless for
+					    * the INIT process, doesn't matter.
+					    */
+					(k_base + k_limit) >> LIMIT_4K_SHIFT,
+					DA_32 | DA_LIMIT_4K | DA_DRW | privilege << 5);
+		}
+
+		p_proc->regs.cs = INDEX_LDT_C << 3 | SA_TIL | rpl;		/* cs为指向LDT第一个描述符的选择子 */
+		p_proc->regs.ds =
+			p_proc->regs.es =
+			p_proc->regs.fs =
+			p_proc->regs.ss = INDEX_LDT_RW << 3 | SA_TIL | rpl;	/* ds, es, fs, ss为指向LDT第二个描述符的选择子 */
+		p_proc->regs.gs = (SELECTOR_KERNEL_GS & SA_RPL_MASK) | rpl;	/* gs仍然指向显存，只是改变了DPL让其在低特权级下运行 */
 	
-		p_proc->regs.eip = (u32) p_task->initial_eip;				/* eip为指向进程体 */
-		p_proc->regs.esp = (u32) p_task_stack;					/* esp指向新的栈底 */
+		p_proc->regs.eip = (u32) p_task->initial_eip;	/* eip为指向进程体 */
+		p_proc->regs.esp = (u32) p_task_stack;		/* esp指向新的栈底 */
 		p_proc->regs.eflags = eflags;
 
-		p_proc->flags		= 0;						/* this proc is runnable */
-		p_proc->p_msg		= 0;						/* null message */
+		p_proc->flags		= 0;			/* this proc is runnable */
+		p_proc->p_msg		= 0;			/* null message */
 		p_proc->recv_from	= NO_TASK;
 		p_proc->send_to		= NO_TASK;
 		p_proc->has_int_msg	= 0;
@@ -81,13 +106,14 @@ PUBLIC int kernel_main(){
 		p_proc->ticks = p_proc->priority = prio;
 	
 		p_task_stack -= p_task->stacksize;
-		p_proc ++;
-		p_task ++;
-		selector_ldt += (1 << 3);
+
+		for(j=0; j<NR_FILES; j++){
+			p_proc->filp[j] = 0;
+		}
 	}
 
 	ticks = 0;
-	k_reenter = 0;									/* 用于判断中断嵌套时中断是否重入 */
+	k_reenter = 0;			/* 用于判断中断嵌套时中断是否重入 */
 	p_proc_ready = proc_table;
 
 	init_clock();
@@ -96,9 +122,9 @@ PUBLIC int kernel_main(){
 
 	while(TRUE){}
 }
-/*=================================================================================================
-  					get_ticks()
-=================================================================================================*/
+/**************************************************************************************************
+ * 					get_ticks
+ *************************************************************************************************/
 PUBLIC int get_ticks(){
 	MESSAGE	msg;
 
@@ -108,68 +134,34 @@ PUBLIC int get_ticks(){
 	return msg.RETVAL;
 }
 /**************************************************************************************************
+ * 					Init
+ **************************************************************************************************
+ * The hen.
+ *************************************************************************************************/
+void Init(){
+	int fd_stdin = open("/dev_tty0", O_RDWR);
+	assert(fd_stdin == 0);
+	int fd_stdout = open("/dev_tty0", O_RDWR);
+	assert(fd_stdout == 1);
+
+	printf("Init() is running...\n");
+
+	int pid = fork();
+	if(pid != 0){
+		printf("parent is running, child pid: %d\n", pid);
+		spin("parent");
+	}else{
+		printf("child is running, pid: %d\n", getpid());
+		spin("child");
+	}
+}
+/**************************************************************************************************
  * 					TestA
  **************************************************************************************************
  * <Ring 3> A user process.
  *************************************************************************************************/
 void TestA(){
-	int fd;
-	int i, n;
-	const char filename[]	= "name";
-	const char bufw[]	= "liangbizhi";
-	const int rd_bytes	= 5;
-	char bufr[rd_bytes];
-
-	assert(rd_bytes <= strlen(bufw));
-
-	/* create */
-	fd = open(filename, O_CREAT | O_RDWR);
-	assert(fd != -1);
-	printl("File created. fd: %d\n", fd);
-
-	/* write */
-	n = write(fd, bufw, strlen(bufw));
-	assert(n == strlen(bufw));
-
-	/* close */
-	close(fd);
-
-	/* open */
-	fd = open(filename, O_RDWR);
-	assert(fd != -1);
-	printl("File opened. fd: %d\n", fd);
-
-	/* read */
-	n = read(fd, bufr, rd_bytes);
-	assert(n == rd_bytes);
-	bufr[n] = 0;
-	printl("%d bytes read: %s\n", n, bufr);
-
-	/* close */
-	close(fd);
-
-	char* filenames[] = {"/foo", "/bar", "/baz"};
-
-	/* create files */
-	for(i=0; i<sizeof(filenames) / sizeof(filenames[0]); i++){
-		fd = open(filenames[i], O_CREAT | O_RDWR);
-		assert(fd != -1);
-		printl("File created: %s (fd %d)\n", filenames[i], fd);
-		close(fd);
-	}
-
-	char* rfilenames[] = {"/bar", "/foo", "/baz", "/dev_tty0"};
-
-	/* remove files */
-	for(i=0; i<sizeof(rfilenames) / sizeof(rfilenames[0]); i++){
-		if(unlink(rfilenames[i]) == 0){
-			printl("File removed: %s\n", rfilenames[i]);
-		}else{
-			printl("Failed to remove file: %s\n", rfilenames[i]);
-		}
-	}
-
-	spin("TestA");
+	while(TRUE){}
 }
 
 /**************************************************************************************************
@@ -178,30 +170,7 @@ void TestA(){
  * <Ring 3> A user process.
  *************************************************************************************************/
 void TestB(){
-	char tty_name[] = "/dev_tty1";
-
-	int fd_stdin	= open(tty_name, O_RDWR);
-	assert(fd_stdin == 0);
-	int fd_stdout	= open(tty_name, O_RDWR);
-	assert(fd_stdout == 1);
-
-	char rdbuf[128];
-
-	while(TRUE){
-		printf("$ ");
-		int r = read(fd_stdin, rdbuf, 70);
-		rdbuf[r] = 0;
-
-		if(strcmp(rdbuf, "hello") == 0){
-			printf("hello world!\n");
-		}else{
-			if(rdbuf[0]){
-				printf("{%s}\n", rdbuf);
-			}
-		}
-	}
-
-	assert(0);	/* never happend */
+	while(TRUE){}
 }
 /**************************************************************************************************
  * 					TestC
@@ -209,11 +178,7 @@ void TestB(){
  * <Ring 3> A user process.
  *************************************************************************************************/
 void TestC(){
-	spin("TestC");
-	while(TRUE){
-		printf("C");
-		milli_delay(2000);
-	}
+	while(TRUE){}
 }
 /*=================================================================================================
   					panic

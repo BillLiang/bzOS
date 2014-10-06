@@ -24,9 +24,11 @@ OBJS		= kernel/kernel.o kernel/start.o kernel/i8259.o kernel/protect.o \
 		  kernel/keyboard.o kernel/tty.o kernel/console.o kernel/systask.o \
 		  kernel/hd.o \
 		  fs/main.o  fs/misc.o fs/open.o fs/read_write.o fs/link.o \
-		  lib/printf.o \
+		  mm/main.o mm/forkexit.o \
+		  lib/printf.o lib/getpid.o \
 		  lib/klib.o lib/kliba.o lib/string.o lib/misc.o \
-		  lib/open.o lib/close.o lib/read.o lib/write.o lib/unlink.o
+		  lib/open.o lib/close.o lib/read.o lib/write.o lib/unlink.o \
+		  lib/fork.o
 
 BZOSBOOT	= boot/boot.bin boot/loader.bin
 BZOSKERNEL	= kernel/kernel.bin
@@ -128,7 +130,16 @@ fs/read_write.o: fs/read_write.c
 fs/link.o: fs/link.c
 	$(CC) $(CFLAGS) -o $@ $<
 
+mm/main.o: mm/main.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+mm/forkexit.o: mm/forkexit.c
+	$(CC) $(CFLAGS) -o $@ $<
+
 lib/printf.o: lib/printf.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+lib/getpid.o: lib/getpid.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 lib/klib.o: lib/klib.c
@@ -153,9 +164,11 @@ lib/read.o: lib/read.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 lib/write.o: lib/write.c
-lib/write.o: lib/write.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 lib/unlink.o: lib/unlink.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+lib/fork.o: lib/fork.c
 	$(CC) $(CFLAGS) -o $@ $<
 

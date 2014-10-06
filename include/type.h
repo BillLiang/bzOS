@@ -50,4 +50,10 @@ typedef struct{
 	} u;
 } MESSAGE;
 
+/*  */
+struct boot_params{
+	int	mem_size;	/* memory size */
+	u8*	kernel_file;	/* addr of kernel file */
+};
+
 #endif

@@ -1,45 +1,40 @@
 /**************************************************************************************************
- * @file	systask.c
+ * @file	fork.c
  * @brief
- * @author	BillLiang
- * @date	2014-9-5
+ * @author	Bill Liang
+ * @date	2014-10-5
  *************************************************************************************************/
 
 #include "type.h"
 #include "const.h"
 #include "stdio.h"
 #include "protect.h"
+#include "string.h"
 #include "fs.h"
+#include "proc.h"
 #include "console.h"
 #include "tty.h"
-#include "proc.h"
-#include "string.h"
 #include "proto.h"
 #include "global.h"
 
 /**************************************************************************************************
- * 					task_sys
+ * 					fork
  **************************************************************************************************
- * <Ring 1> The main loop off TASK SYS.
+ * Create a child process, which is actually a copy of the caller.
+ *
+ * @return	On success, the PID of the child process is returned in the parent's thread of execution,
+ * 		and a 0 is returned in the child's thread of execution.
+ *
+ * 		On failure, a -1 will be returned in the parent's context, no child process will be
+ * 		created.
  *************************************************************************************************/
-PUBLIC void task_sys(){
-	MESSAGE msg;				/* for loading the msg sent */
-	while(TRUE){
-		send_recv(RECEIVE, ANY, &msg);	/* get the msg */
-		int src		= msg.source;
-		switch(msg.type){
-		case GET_TICKS:
-			msg.RETVAL = ticks;
-			send_recv(SEND, src, &msg);
-			break;
-		case GET_PID:
-			msg.type = SYSCALL_RET;
-			msg.PID = src;
-			send_recv(SEND, src, &msg);
-			break;
-		default:
-			panic("unknown msg type");
-			break;
-		}
-	}
+PUBLIC int fork(){
+	MESSAGE msg;
+	msg.type = FORK;
+
+	send_recv(BOTH, TASK_MM, &msg);
+	assert(msg.type == SYSCALL_RET);
+	assert(msg.RETVAL == 0);
+
+	return msg.PID;
 }

@@ -15,7 +15,7 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 #define	assert(exp)
 #endif
 
-/* 除了在global.c中，EXTERN被定义为extern */
+/* EXTERN is defined as extern except in global.c */
 #define	EXTERN	extern
 
 #define	STR_DEFAULT_LEN		1024
@@ -25,7 +25,35 @@ void assertion_failure(char* exp, char* file, char* base_file, int line);
 
 #define MAX_PATH		128
 
+/**************************************************************************************************
+ ***********************************
+ * printf, printl, printx
+ ***********************************
+ *
+ * printf:
+ * 	USER_PROC --------> FS --------> TTY
+ *
+ **************************************************************************************************
+ *
+ * printl: variant-parameter-version printx
+ * 	calls vsprintf, then printx (trap into kernel directly)
+ *
+ **************************************************************************************************
+ *
+ * printx: low level print without using IPC
+ * 	USER_PROC --------------------> KERNEL (trap directly)
+ *
+ *************************************************************************************************/
+
+/* printf.c */
+PUBLIC	int	printf(const char* fmt, ...);
+PUBLIC	int	printl(const char* fmt, ...);
+PUBLIC	int	sprintf(char* buf, const char* fmt, ...);
+
 /* library functions */
+/* lib/getpid.c */
+PUBLIC int getpid();
+
 /* lib/open.c */
 PUBLIC int open(const char* pathname, int flags);
 /* lib/close.c */
@@ -36,3 +64,6 @@ PUBLIC int read(int fd, void* buf, int count);
 PUBLIC int write(int fd, const void* buf, int count);
 /* lib/unlink.c */
 PUBLIC int unlink(const char* pathname);
+
+/* lib/fork.c */
+PUBLIC int fork();

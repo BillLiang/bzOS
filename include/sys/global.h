@@ -46,3 +46,9 @@ EXTERN	struct inode*	root_inode;
 EXTERN	struct file_desc	f_desc_table[NR_FILE_DESC];
 EXTERN	struct inode		inode_table[NR_INODE];
 EXTERN	struct super_block	super_block[NR_SUPER_BLOCK];
+
+/* MM */
+EXTERN	MESSAGE		mm_msg;
+extern	u8*		mmbuf;
+extern	const int	MMBUF_SIZE;
+EXTERN	int		memory_size;

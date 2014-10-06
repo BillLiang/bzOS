@@ -17,9 +17,7 @@
 #include "global.h"
 #include "proto.h"
 
-
-PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
-PRIVATE void init_descriptor(DESCRIPTOR* p_desc, u32 base, u32 limit, u16 attribute);
+PRIVATE void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privilege);
 
 /*中断处理函数*/
 void	divide_error();
@@ -112,36 +110,36 @@ PUBLIC void init_prot(){
 	init_idt_desc(INT_VECTOR_IRQ8 + 5, DA_386IGate, hwint13, PRIVILEGE_KRNL);
 	init_idt_desc(INT_VECTOR_IRQ8 + 6, DA_386IGate, hwint14, PRIVILEGE_KRNL);
 	init_idt_desc(INT_VECTOR_IRQ8 + 7, DA_386IGate, hwint15, PRIVILEGE_KRNL);
-	/* 系统调用 */
+	/* System call */
 	init_idt_desc(INT_VECTOR_SYS_CALL, DA_386IGate, sys_call, PRIVILEGE_USER);
 
 	/* void* memset(void* s, int ch, size_t n)	*/
 	memset(&tss, 0, sizeof(tss));
 	tss.ss0 = SELECTOR_KERNEL_DS;
 	init_descriptor(&gdt[INDEX_TSS],
-			vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss),
+			makelinear(SELECTOR_KERNEL_DS, &tss),
 			sizeof(tss) - 1,
 			DA_386TSS );
-	tss.iobase = sizeof(tss);			/* 没有I/O位图 */
+	tss.iobase = sizeof(tss);			/* No IO permission bitmap */
 	
-	/* 根据进程个数，初始化 GDT 中进程的 LDT 描述符 */
+	/* fill the LDT descriptors of each proc in GDT */
 	int i;
-	PROCESS* p_proc		= proc_table;
-	u16 selector_ldt	= INDEX_LDT_FIRST << 3;
-
 	for(i=0; i<NR_TASKS + NR_PROCS; i++){
-		init_descriptor(&gdt[selector_ldt >> 3], 
-				vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[i].ldts),
+		memset(&proc_table[i], 0, sizeof(PROCESS));
+
+		proc_table[i].ldt_sel = SELECTOR_LDT_FIRST + (i << 3);
+		assert(INDEX_LDT_FIRST + i < GDT_SIZE);
+		
+		init_descriptor(&gdt[INDEX_LDT_FIRST + i],
+				makelinear(SELECTOR_KERNEL_DS, proc_table[i].ldts),
 				LDT_SIZE * sizeof(DESCRIPTOR) - 1,
-				DA_LDT );
-		p_proc ++;
-		selector_ldt += (1 << 3);
+				DA_LDT);
 	}
 }
 /*=================================================================================================
   				初始化 386 中断门
  ================================================================================================*/
-PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege){
+PRIVATE void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privilege){
 	GATE*	p_gate = &idt[vector];
 	u32	base = (u32)handler;
 	p_gate->offset_low	= base & 0xffff;
@@ -154,7 +152,7 @@ PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handl
 /*=================================================================================================
   				初始化 段描述符
  ================================================================================================*/
-PRIVATE void init_descriptor(DESCRIPTOR* p_desc, u32 base, u32 limit, u16 attribute){
+PUBLIC void init_descriptor(DESCRIPTOR* p_desc, u32 base, u32 limit, u16 attribute){
 	p_desc->limit_low	= limit & 0xffff;
 	p_desc->base_low	= base & 0xffff;
 	p_desc->base_mid	= (base >> 16) & 0xff;
@@ -162,12 +160,12 @@ PRIVATE void init_descriptor(DESCRIPTOR* p_desc, u32 base, u32 limit, u16 attrib
 	p_desc->limit_high_attr2= ((limit >> 16) & 0xf) | (attribute >> 8) & 0xf0;
 	p_desc->base_high	= (base >> 24) & 0xff;
 }
-
-
-/*=================================================================================================
-  					由段名求绝对地址(PUBLIC)
- ================================================================================================*/
-PUBLIC u32 seg2phys(u16 seg){
+/**************************************************************************************************
+ * 					seg2linear
+ **************************************************************************************************
+ * Calculate linear address according to seg.
+ *************************************************************************************************/
+PUBLIC u32 seg2linear(u16 seg){
 	DESCRIPTOR* p_desc = &gdt[seg >> 3];
 	return (p_desc->base_high << 24 | p_desc->base_mid << 16 | p_desc->base_low);
 }

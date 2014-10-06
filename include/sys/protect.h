@@ -1,15 +1,18 @@
 #ifndef _BZOS_PROTECT_H_
 #define _BZOS_PROTECT_H_
 
-//存储段 / 系统描述符（共8个字节）
+/* 存储段 / 系统描述符（共8个字节）*/
 typedef struct s_descriptor{
-	u16	limit_low;
-	u16	base_low;
-	u8	base_mid;
-	u8	attr1;
-	u8	limit_high_attr2;
-	u8	base_high;
+	u16	limit_low;		/* Limit */
+	u16	base_low;		/* Base */
+	u8	base_mid;		/* Base */
+	u8	attr1;			/* P(1) DPL(2) DT(1) TYPE(4) */
+	u8	limit_high_attr2;	/* G(1) D(1) 0(1) AVL(1) LimitHigh(4) */
+	u8	base_high;		/* Base */
 }DESCRIPTOR;
+
+#define reassembly(high, high_shift, mid, mid_shift, low) \
+	(((high) << (high_shift)) + ((mid) << (mid_shift)) + (low))
 
 /*门描述符*/
 typedef struct s_gate{
@@ -81,7 +84,7 @@ typedef struct s_tss{
 
 #define	SA_TI_MASK			0xfffb		/* 用于屏蔽TI位 */
 #define	SA_TIG				0		/* 该选择子用于GDT */
-#define	SA_TIL				4		/* 该选择在用于LDT */
+#define	SA_TIL				4		/* 该选择子用于LDT */
 
 
 
@@ -94,6 +97,7 @@ typedef struct s_tss{
 /* 描述符类型说明 */
 #define	DA_32				0x4000	/* 32位段 */
 #define	DA_LIMIT_4K			0x8000	/* 段界限粒度为4k字节 */
+#define LIMIT_4K_SHIFT			12
 #define	DA_DPL0				0x00	/* DPL=0 */
 #define	DA_DPL1				0x20	/* DPL=1 */
 #define	DA_DPL2				0x40	/* DPL=2 */
@@ -142,5 +146,9 @@ typedef struct s_tss{
 
 /* 宏 */
 /* 线性地址 --> 物理地址 */
-#define	vir2phys(seg_base, vir)	(u32)((u32) seg_base + (u32) vir)
+// #define	vir2phys(seg_base, vir)	(u32)((u32) seg_base + (u32) vir)
+
+/* seg:off -> linear address */
+#define makelinear(seg,off)	(u32)((u32)(seg2linear(seg)) + (u32)(off))
+
 #endif

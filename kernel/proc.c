@@ -72,8 +72,11 @@ PUBLIC void* va2la(int pid, void* va){
 	PROCESS* p	= &proc_table[pid];
 	u32 seg_base	= ldt_seg_linear(p, INDEX_LDT_RW);
 	u32 la		= seg_base + (u32)va;
-
-	if(pid < NR_TASKS + NR_PROCS){
+	/**
+	 * @attention
+	 * Here is NR_NATIVE_PROCS
+	 */
+	if(pid < NR_TASKS + NR_NATIVE_PROCS){
 		assert(la == (u32)va);
 	}
 	return (void*)la;
@@ -552,7 +555,7 @@ PUBLIC void dump_proc(PROCESS* p){
 	vsprintf(info, "ldt_sel: %x.  ", p->ldt_sel);		disp_color_str(info, text_color);
 	vsprintf(info, "ticks: %x.  ", p->ticks);		disp_color_str(info, text_color);
 	vsprintf(info, "priority: %x.  ", p->priority);		disp_color_str(info, text_color);
-	vsprintf(info, "pid: %x.  ", p->pid);			disp_color_str(info, text_color);
+//	vsprintf(info, "pid: %x.  ", p->pid);			disp_color_str(info, text_color);
 	vsprintf(info, "name: %s.  ", p->name);			disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
 	vsprintf(info, "flags: %x.  ", p->flags);		disp_color_str(info, text_color);

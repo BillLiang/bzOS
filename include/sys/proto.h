@@ -13,10 +13,14 @@ PUBLIC	void	enable_irq(int irq);
 
 /* protect.c */
 PUBLIC	void	init_prot();
-PUBLIC	u32	seg2phys(u16 seg);
+PUBLIC	u32	seg2linear(u16 seg);
 PUBLIC	void	init_8259A();
+PUBLIC	void	init_descriptor(DESCRIPTOR* p_desc, u32 base, u32 limit, u16 attribute);
+
 
 /* klib.c */
+PUBLIC	void	get_boot_params(struct boot_params* pbp);
+PUBLIC	int	get_kernel_map(u32* b, u32* l);
 PUBLIC	char*	itoa(char* str, int num);
 PUBLIC	void	delay(int times);
 
@@ -30,6 +34,7 @@ PUBLIC	void	put_irq_handler(int irq, irq_handler handler);
 
 /* main.c */
 PUBLIC	int	get_ticks();
+void	Init();
 void	TestA();
 void	TestB();
 void	TestC();
@@ -95,10 +100,12 @@ PUBLIC	int	do_unlink();
 PUBLIC	int	strip_path(char* filename, const char* pathname, struct inode** ppinode);
 PUBLIC	int	search_file(char* path);
 
-/* printf.c */
-PUBLIC	int	printf(const char* fmt, ...);
-PUBLIC	int	printl(const char* fmt, ...);
-PUBLIC	int	sprintf(char* buf, const char* fmt, ...);
+/* mm/main.c */
+PUBLIC	void	task_mm();
+PUBLIC	int	alloc_mem(int pid, int memsize);
+
+/* mm/forkexit.c */
+PUBLIC	int	do_fork();
 
 /* lib/misc.c */
 PUBLIC	void	spin(char* func_name);

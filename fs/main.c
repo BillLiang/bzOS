@@ -23,6 +23,8 @@ PRIVATE void init_fs();
 PRIVATE void mkfs();
 PRIVATE void read_super_block(int dev);
 
+PRIVATE int fs_fork();
+
 /**************************************************************************************************
  * 					task_fs
  **************************************************************************************************
@@ -52,6 +54,9 @@ PUBLIC void task_fs(){
 			break;
 		case RESUME_PROC:
 			src = fs_msg.PROC_NR;
+			break;
+		case FORK:
+			fs_msg.RETVAL	= fs_fork();
 			break;
 		default:
 			dump_msg("FS::unkown message:", &fs_msg);
@@ -140,7 +145,7 @@ PRIVATE void mkfs(){
 
 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 
-	printl("dev size: %x sectors\n", geo.size);
+	printl("{FS} dev size: %x sectors\n", geo.size);
 
 	/******************************************************************************************
 	 * Super Block
@@ -173,7 +178,7 @@ PRIVATE void mkfs(){
 	/* write the super block using fsbuf */
 	WR_SECT(ROOT_DEV, 1);
 	/* 这里全是字节偏移量，后面加上00，然后* 2，其实就是（扇区*扇区字节大小） */
-	printl("devbase: %x00, sb: %x00, imap: %x00, smap: %x00\n"
+	printl("{FS} devbase: %x00, sb: %x00, imap: %x00, smap: %x00\n"
 		"        inodes: %x00, 1st_sector: %x00\n",
 		geo.base * 2,
 		(geo.base + 1) * 2,
@@ -444,4 +449,22 @@ PUBLIC void sync_inode(struct inode* p){
 	pinode->i_nr_sects	= p->i_nr_sects;
 
 	WR_SECT(p->i_dev, nr_blk);
+}
+/**************************************************************************************************
+ * 					fs_fork
+ **************************************************************************************************
+ * Perform the aspects of fork() that relate to file.
+ *
+ * @return	0 if success, otherwise a negative integer.
+ *************************************************************************************************/
+PRIVATE int fs_fork(){
+	int i;
+	PROCESS* child = &proc_table[fs_msg.PID];
+	for(i=0; i<NR_FILES; i++){
+		if(child->filp[i]){
+			child->filp[i]->fd_cnt++;
+			child->filp[i]->fd_inode->i_cnt++;
+		}
+	}
+	return 0;
 }

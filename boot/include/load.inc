@@ -10,3 +10,8 @@ KernelEntryPointPhyAddr		equ	1000h
 
 PageDirBase		equ	100000h				;页目录开始地址 1M
 PageTblBase		equ	101000h				;页表开始地址 1M + 4K
+
+; ATTENTION:
+; Macros below should be corresponding with C source.
+BOOT_PARAM_ADDR		equ	900h
+BOOT_PARAM_MAGIC	equ	0b007h
